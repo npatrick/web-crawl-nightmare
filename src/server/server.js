@@ -1,10 +1,11 @@
 'use strict';
-
+require('dotenv').config();
 const express = require('express');
 const logger = require('morgan');
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const Nightmare = require('nightmare');
+const User = require('../db/userSchema');
 
 const nightmare = Nightmare({
   show: true
@@ -63,9 +64,43 @@ app.get('/crawl', (req, res) => {
   rp(options)
     .then(async ($) => {
       const $body = $('body');
-      const resultItem = $body.find('div.g');
+      const resultList = $body.find('div.g');
       let instaToVisit = ['https://www.instagram.com/sydnesummer/'];
-
+      let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
+      let tempInsta = [];
+      // iterate google result items to retrieve insta url to visit
+      resultList.each((index, item) => {
+        let hrefStr = $(item).find('.r > a').attr('href');
+        let indexOfCom = hrefStr.indexOf('.com/');
+        let instaUserPath = hrefStr.slice(7, hrefStr.indexOf('/', indexOfCom + 5)) + '/';
+        console.log('SANITY CHECK ON INSTA HREF!!!!!!!!!!!!!!!!!!!', instaUserPath);
+        // only add profiles urls and NOT posts urls
+        if (!instaUser.includes('/p/')) {
+          let instaUser = href.slice(indexOfCom + 5, -1);
+          tempInsta.push(instaUserPath);
+          dbUserCheck.push(instaUser);
+        }
+      })
+      // check if users already exists in db
+      await User.find({
+            username: {
+              $in: dbUserCheck
+            }
+          }, (err, doc) => {
+            if (err) {
+              console.error('Error in retrieving doc from DB find with $in');
+              return
+            }
+            if (doc) {
+              let linkArr = doc.map(item => item.instagramLink);
+              // filter out existing db users to visit
+              instaToVisit = tempInsta.filter(gram => !linkArr.includes(gram));
+            } else {
+              // all are new
+              console.log('ALL ARE NEW!');
+              instaToVisit = tempInsta;
+            }
+          })
 
       console.log('INSTAS TO VISIT:', instaToVisit);
       // iterate insta url and visit each
@@ -85,11 +120,11 @@ app.get('/crawl', (req, res) => {
           console.log('NEW USER:', username);
           resultSoFar[username] = {
             instagramLink: `instagram.com/${username}/`,
+            fullName: fullName,
             imageProf: imageProf,
             followers: followers,
-            fullName: fullName,
-            bio: bio,
             website: website,
+            bio: bio,
             category: []
           };
           let bioArr = bio.replace(/([\uE000-\uF8FF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF])/g, '').split(' ');

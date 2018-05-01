@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 let mongoUri = `mongodb://${process.env.dbUser}:${process.env.dbPass}@ds014648.mlab.com:14648/email-list`;
 
 const dbOptions = {
-	useMongoClient: true,
 	autoReconnect: true,
 	reconnectTries: Number.MAX_VALUE,
 	reconnectInterval: 500,

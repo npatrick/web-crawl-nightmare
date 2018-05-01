@@ -7,7 +7,7 @@ const db = require('./index');
 
 const userSchema = Schema({
 	username: {
-		unique: true
+		unique: true,
 		type: {
 			instagramLink: String,
 			fullName: String,
@@ -21,6 +21,6 @@ const userSchema = Schema({
 	}
 });
 
-const User = mongoose('User', userSchema);
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;
