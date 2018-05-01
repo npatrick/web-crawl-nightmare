@@ -12,3 +12,6 @@ npm-debug.log*
 
 # User settings
 .vscode
+
+# Mac files
+.DS_Store
