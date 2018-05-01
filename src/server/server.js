@@ -15,6 +15,8 @@ app.use(logger('dev'));
 
 let resultSoFar = {};
 
+let nightmareInstance;
+
 app.get('/crawl', (req, res) => {
   const googleQuery = 'https://www.google.com/search?q=site:www.instagram.com+%22los+angeles%22+LA+blogger';
 
@@ -26,20 +28,35 @@ app.get('/crawl', (req, res) => {
 
   // helper function for browsing
   const beginNightmare = async (domain, selectorStr) => {
-    return await nightmare
-      .goto(domain)
-      .wait(2000)
+  	let normalizeDomain = '';
+  	if (!domain.includes('http')) {
+  		normalizeDomain = `http://${domain}`;
+  	} else {
+  		normalizeDomain = domain;
+  	}
+  	if (!nightmareInstance) {
+  	console.log('from IF Now visiting...', normalizeDomain, '& Selector:', selectorStr);
+  		// nightmareInstance is now an http object
+  		// w/ props: url, code, method, referrer, and headers
+			nightmareInstance = await nightmare.goto(normalizeDomain);
+  	} else {
+  		console.log('from ELSE Now visiting...', normalizeDomain, '& Selector:', selectorStr);
+  		await nightmare.goto(normalizeDomain)
+  			.catch((err) => console.error('NEXT ROUND ERROR:', err))
+  	}
+  	console.log('NOICE!');
+  	return await nightmare
+    	.wait(selectorStr)
       .evaluate((selector) => {
-        console.log('WE ARE NOW EVALUATING...', selector);
         return document.querySelector(selector).outerHTML;
       }, selectorStr)
-      .end()
       .then((el) => {
         const $ = cheerio.load(el);
         return $;
       })
       .catch(error => {
-        console.error(`Execution failed on beginNightmare fn for ${domain}\n Error stat:`, error);
+        console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
+      	return beginNightmare(normalizeDomain, selectorStr);
       })
   };
 
@@ -47,7 +64,7 @@ app.get('/crawl', (req, res) => {
     .then(async ($) => {
       const $body = $('body');
       const resultItem = $body.find('div.g');
-      let instaToVisit = ['https://www.instagram.com/natllely/'];
+      let instaToVisit = ['https://www.instagram.com/sydnesummer/'];
 
 
       console.log('INSTAS TO VISIT:', instaToVisit);
@@ -98,8 +115,10 @@ app.get('/crawl', (req, res) => {
               }
             })
           });
+          console.log('USER makeup so far:', resultSoFar[username]);
           // non-existent email for the insta user BUT website is included in bio
           if (!resultSoFar[username].email && website) {
+          	console.log('NOW CHECKING USER WEB...');
             const $userWeb = await beginNightmare(website, 'body');
 
             let hyperLink = $userWeb('.fa-envelope').parent().attr('href') || $userWeb('.email').attr('href');
@@ -111,13 +130,13 @@ app.get('/crawl', (req, res) => {
             console.log('WHAT TWIT??...??..??..', twitterAddress);
 
             if (hyperLink) {
-              emailLink = hyperLink.slice(6); // specific to mailto href
+              emailLink = hyperLink.slice(7); // specific to mailto href
             } else {
               if (twitterAddress) {
                 console.log('VISITING TWIT...', twitterAddress);
-                const $twitter = await beginNightmare(twitterAddress, '.ProfileHeaderCard-bio.u-dir');
+                const $twitter = await beginNightmare(twitterAddress, '.ProfileHeaderCard-bio');
 
-                $twitterBioArr = $twitter.text().split(' ');
+                let $twitterBioArr = $twitter.text().split(' ');
                 $twitterBioArr.forEach(word => {
                   topDomain.forEach(domain => {
                     if (word.includes('@') && word.includes(domain)) {
@@ -128,11 +147,12 @@ app.get('/crawl', (req, res) => {
               }
             }
             resultSoFar[username].email = emailLink;
+            nightmare.end();
           }
         }
         console.log('RESULT so far on OBJ IS:.................................\n', resultSoFar);
       })
-
+      await res.send(resultSoFar);
     })
 })
 
