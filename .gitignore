@@ -2,7 +2,13 @@
 node_modules
 
 # Logs
-logs *.log tmp npm-debug.log*
+logs
+*.log
+tmp
+npm-debug.log*
+
+# Variables
+.env
 
 # User settings
 .vscode
