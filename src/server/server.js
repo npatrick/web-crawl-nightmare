@@ -44,7 +44,7 @@ app.get('/crawl', (req, res) => {
     console.log('now checking in ', normalizeDomain);
 		return nightmare
       .goto(normalizeDomain)
-      .wait(3000)
+      .wait(2000)
     	.wait(selectorStr)
       .evaluate((selector) => {
         return document.querySelector(selector).outerHTML;
@@ -90,7 +90,7 @@ app.get('/crawl', (req, res) => {
       const $body = $('body');
       const resultList = $body.find('div.g');
       // 'https://www.instagram.com/sydnesummer/'
-      let instaToVisit = [];
+      // let instaToVisit = [];
       let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
       let tempInsta = [];
       // iterate google result items to retrieve insta url to visit
@@ -106,19 +106,20 @@ app.get('/crawl', (req, res) => {
           dbUserCheck.push(instaUser);
         }
       })
-      resultObj.instaToVisit = instaToVisit;
+      // resultObj.instaToVisit = instaToVisit;
       resultObj.dbUserCheck = dbUserCheck;
       resultObj.tempInsta = tempInsta;
       return resultObj;
     })
     .then((resultObj) => {
       // check if users already exists in db
-      return User.find({ username: { $in: resultObj.dbUserCheck } })
+      return User.find({ username: { $in: resultObj.dbUserCheck } }).exec();
     })
     .then((doc) => {
       let tempInstaToVisit;
-      console.log('NOT EVEN HERE?');
-      if (doc) {
+      if (doc.length !== 0) {
+        console.log('****************** Detected Existing Users in DB ******************');
+        console.log('WHAT WAS RETURNED THEN?', doc);
         let linkArr = doc.map(item => item.instagramLink);
         // filter out existing db users to visit
         tempInstaToVisit = resultObj.tempInsta.filter(gram => !linkArr.includes(gram));
@@ -128,6 +129,9 @@ app.get('/crawl', (req, res) => {
         tempInstaToVisit = resultObj.tempInsta;
       }
       return tempInstaToVisit;
+    }, (err) => {
+      console.error('Something went wrong on mongo query... \n', err);
+      return;
     })
     .then((instaToVisit) => {
       console.log('INSTAS TO VISIT:', instaToVisit);
@@ -202,11 +206,11 @@ app.get('/crawl', (req, res) => {
 
               if (hyperLink) {
                 emailLink = hyperLink.slice(7); // specific to mailto href
-                resultSoFar[userWeb.username].email = emailLink;
+                resultSoFar[userObj.username].email = emailLink;
               } else {
                 if (twitterAddress) {
                   console.log('VISITING TWIT...', twitterAddress);
-                  twitterArr.push({ username: userWeb.username, website: twitterAddress });
+                  twitterArr.push({ username: userObj.username, website: twitterAddress });
                 }
               }
             })
