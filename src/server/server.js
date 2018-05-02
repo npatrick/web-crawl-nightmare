@@ -43,10 +43,10 @@ app.get('/crawl', (req, res) => {
   	} else {
   		console.log('from ELSE Now visiting...', normalizeDomain, '& Selector:', selectorStr);
   		await nightmare.goto(normalizeDomain)
-  			.catch((err) => console.error('NEXT ROUND ERROR:', err))
+  			// .catch((err) => console.error('NEXT ROUND ERROR:', err))
   	}
-  	console.log('NOICE!');
   	return await nightmare
+      .wait(3000)
     	.wait(selectorStr)
       .evaluate((selector) => {
         return document.querySelector(selector).outerHTML;
@@ -57,7 +57,8 @@ app.get('/crawl', (req, res) => {
       })
       .catch(error => {
         console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
-      	return beginNightmare(normalizeDomain, selectorStr);
+      	// return beginNightmare(normalizeDomain, selectorStr);
+        return;
       })
   };
 
@@ -65,7 +66,8 @@ app.get('/crawl', (req, res) => {
     .then(async ($) => {
       const $body = $('body');
       const resultList = $body.find('div.g');
-      let instaToVisit = ['https://www.instagram.com/sydnesummer/'];
+      // 'https://www.instagram.com/sydnesummer/'
+      let instaToVisit = [];
       let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
       let tempInsta = [];
       // iterate google result items to retrieve insta url to visit
@@ -73,34 +75,32 @@ app.get('/crawl', (req, res) => {
         let hrefStr = $(item).find('.r > a').attr('href');
         let indexOfCom = hrefStr.indexOf('.com/');
         let instaUserPath = hrefStr.slice(7, hrefStr.indexOf('/', indexOfCom + 5)) + '/';
-        console.log('SANITY CHECK ON INSTA HREF!!!!!!!!!!!!!!!!!!!', instaUserPath);
+
         // only add profiles urls and NOT posts urls
-        if (!instaUser.includes('/p/')) {
-          let instaUser = href.slice(indexOfCom + 5, -1);
+        if (!instaUserPath.includes('/p/')) {
+          let instaUser = hrefStr.slice(indexOfCom + 5, -1);
           tempInsta.push(instaUserPath);
           dbUserCheck.push(instaUser);
         }
       })
       // check if users already exists in db
-      await User.find({
-            username: {
-              $in: dbUserCheck
-            }
-          }, (err, doc) => {
-            if (err) {
+
+      await User.find({ username: { $in: dbUserCheck } })
+            .then((doc) => {
+              if (doc) {
+                let linkArr = doc.map(item => item.instagramLink);
+                // filter out existing db users to visit
+                instaToVisit = tempInsta.filter(gram => !linkArr.includes(gram));
+              } else {
+                // all are new
+                console.log('ALL ARE NEW!');
+                instaToVisit = tempInsta;
+              }
+            })
+            .catch(err => {
               console.error('Error in retrieving doc from DB find with $in');
               return
-            }
-            if (doc) {
-              let linkArr = doc.map(item => item.instagramLink);
-              // filter out existing db users to visit
-              instaToVisit = tempInsta.filter(gram => !linkArr.includes(gram));
-            } else {
-              // all are new
-              console.log('ALL ARE NEW!');
-              instaToVisit = tempInsta;
-            }
-          })
+            })
 
       console.log('INSTAS TO VISIT:', instaToVisit);
       // iterate insta url and visit each
@@ -134,19 +134,21 @@ app.get('/crawl', (req, res) => {
             'travel', 'adventure', 'adventurer', 'clothing', 'news', 'blogger',
             'influencer', 'model', 'nutrition', 'fitness', 'wellness', 'home', 'kitchen'];
           let topDomain = ['.com', '.net', '.org', '.biz', '.info', '.email', '.ly', '.us'];
-          bioArr.forEach((word, index) => {
+          bioArr.forEach((word) => {
             let lowerWord = word.toLowerCase();
-            // find top level domain
-            topDomain.forEach(domain => {
-              if (word.includes('@') && word.includes(domain)) {
-                resultSoFar[username].email = word;
-              }
-            })
             // find categories and skip duplicates
             keyword.forEach(item => {
               if (lowerWord == item && !skip.hasOwnProperty(lowerWord)) {
                 resultSoFar[username].category.push(lowerWord);
                 skip[lowerWord] = 1;
+              }
+            })
+
+            // find top level domain
+            topDomain.forEach(domain => {
+              if (word.includes('@') && word.includes(domain)) {
+                resultSoFar[username].email = word;
+                return;
               }
             })
           });
@@ -182,13 +184,13 @@ app.get('/crawl', (req, res) => {
               }
             }
             resultSoFar[username].email = emailLink;
-            nightmare.end();
-          }
+          }  
+          // console.log('RESULT so far on OBJ IS:.................................\n', resultSoFar);
         }
-        console.log('RESULT so far on OBJ IS:.................................\n', resultSoFar);
       })
-      await res.send(resultSoFar);
+      return resultSoFar;
     })
+    .then(result => res.send(result));
 })
 
 module.exports = app;
