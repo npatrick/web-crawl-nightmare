@@ -18,6 +18,7 @@
     "morgan": "^1.9.0",
     "nightmare": "^3.0.1",
     "request-promise": "^4.2.2",
+    "vo": "^4.0.2",
     "xvfb": "^0.2.3"
   },
   "devDependencies": {
