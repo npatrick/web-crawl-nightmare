@@ -7,7 +7,10 @@ const db = require('./index');
 
 const userSchema = Schema({
 	username: {
-		unique: true,
+		type: String,
+		unique: true
+	},
+	data: {
 		type: {
 			instagramLink: String,
 			fullName: String,
