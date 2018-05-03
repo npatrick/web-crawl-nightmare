@@ -86,9 +86,16 @@ app.get('/crawl', (req, res) => {
 
   const objToArr = (obj) => {
     let result = [];
-
+    /* Schema needs to be in DB
+     *
+     * {
+     *   username: String,
+     *   data: Object
+     * }
+     *
+    */
     for (let key in obj) {
-      result.push({ [key]: obj[key] })
+      result.push({ username: key, data: obj[key] })
     }
 
     return result;
@@ -113,7 +120,8 @@ app.get('/crawl', (req, res) => {
         // only add profiles urls and NOT posts urls
         if (!instaUserPath.includes('/p/')) {
           // retrieve username from a hyperlink and set it to instaUser
-          let instaUser = hrefStr.slice(indexOfCom + 5, -1);
+          let temp = hrefStr.slice(indexOfCom + 5);
+          let instaUser = temp.slice(0, temp.indexOf('/'))
           tempInsta.push(instaUserPath);
           dbUserCheck.push(instaUser);
         }
@@ -124,6 +132,7 @@ app.get('/crawl', (req, res) => {
       return resultObj;
     })
     .then((resultObj) => {
+      console.log('what are my list of Links makeup to check?\n', resultObj.tempInsta);
       // check if users already exists in db
       return User.find({ username: { $in: resultObj.dbUserCheck } }).exec();
     })
@@ -131,15 +140,15 @@ app.get('/crawl', (req, res) => {
       let tempInstaToVisit;
       if (doc.length !== 0) {
         console.log('****************** Detected Existing Users in DB ******************');
-        console.log('WHAT WAS RETURNED THEN?', doc);
-        let linkArr = doc.map(item => item.instagramLink);
+        let linkArr = doc.map(item => item.data.instagramLink);
         // filter out existing db users to visit
         tempInstaToVisit = resultObj.tempInsta.filter(gram => !linkArr.includes(gram));
       } else {
         // all are new
-        console.log('ALL ARE NEW!');
+        console.log('ALL ARE NEW!', doc);
         tempInstaToVisit = resultObj.tempInsta;
       }
+      console.log('!!!! FILTER RESULT !!!!! :\n', tempInstaToVisit)
       return tempInstaToVisit;
     }, (err) => {
       console.error('Something went wrong on mongo query... \n', err);
@@ -165,7 +174,7 @@ app.get('/crawl', (req, res) => {
             if (!resultSoFar.hasOwnProperty(username)) {
               console.log('NEW USER:', username);
               resultSoFar[username] = {
-                instagramLink: `instagram.com/${username}/`,
+                instagramLink: `https://www.instagram.com/${username}/`,
                 fullName: fullName,
                 imageProf: imageProf,
                 followers: followers,
@@ -196,7 +205,7 @@ app.get('/crawl', (req, res) => {
               if (!resultSoFar[username].email && website) {
                 userWebList.push({ username: username, website: website });
               }
-              console.log('USER makeup so far:', resultSoFar[username]);
+              // console.log('USER makeup so far:', resultSoFar[username]);
             }
             
           }) // end of forEach
