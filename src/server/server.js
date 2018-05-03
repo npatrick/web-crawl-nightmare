@@ -16,6 +16,7 @@ const app = express();
 app.use(logger('dev'));
 
 let resultSoFar = {};
+let resultSoFarArr;
 
 let nightmareInstance;
 
@@ -83,6 +84,25 @@ app.get('/crawl', (req, res) => {
     return cheerioArr;
   }; // end of run fn
 
+  let insertPromise = function * (arr) {
+    yield User.insertMany(arr, { ordered: false })
+      .then(() => ({ ok: 1 }))
+      .catch((err) => {
+        console.error('SOME did NOT get added to DB', err);
+        return;
+      })
+  }
+
+  const objToArr = (obj) => {
+    let result = [];
+
+    for (let key in obj) {
+      result.push({ [key]: obj[key] })
+    }
+
+    return result;
+  };
+
   let resultObj = {};
 
   rp(options)
@@ -101,6 +121,7 @@ app.get('/crawl', (req, res) => {
 
         // only add profiles urls and NOT posts urls
         if (!instaUserPath.includes('/p/')) {
+          // retrieve username from a hyperlink and set it to instaUser
           let instaUser = hrefStr.slice(indexOfCom + 5, -1);
           tempInsta.push(instaUserPath);
           dbUserCheck.push(instaUser);
@@ -135,7 +156,10 @@ app.get('/crawl', (req, res) => {
     })
     .then((instaToVisit) => {
       console.log('INSTAS TO VISIT:', instaToVisit);
-
+      if (instaToVisit === undefined) {
+        console.log('All Dups... no need to visit insta');
+        return;
+      }
       return vo(run(instaToVisit, '#react-root'))
         .then(cheerioArr => {
           let userWebList = [];
@@ -185,11 +209,30 @@ app.get('/crawl', (req, res) => {
             }
             
           }) // end of forEach
-          return userWebList;
+          if (userWebList.length !== 0) {
+            return userWebList;
+          } else {
+            resultSoFarArr = objToArr(resultSoFar);
+            insertPromise(resultSoFarArr)
+              .then((response) => {
+                if (response.acknowledged === true) {
+                  console.log('ALL inserts have been added to DB');
+                }
+              })
+              .catch((err) => {
+                console.error('SOME users were NOT added to DB', err);
+              })
+            res.send(resultSoFar);
+            return;
+          }
         })
         .catch(err => console.error('@ insta having an error of: \n', err))
       })
       .then(userWebList => {
+        if (userWebList === undefined) {
+          console.log('No need to visit user webs');
+          return;
+        }
         console.log('ENTERING USER WEB CHECK...\nwhat is userWebList:', userWebList);
         return vo(run(userWebList, 'body'))
           .then(cheerioArr => {
@@ -201,6 +244,7 @@ app.get('/crawl', (req, res) => {
               $userWeb('.twitter').attr('href') ||
               $userWeb('.fa-twitter').parent().attr('href');
               let emailLink;
+              console.log('User checks below are for', userObj.username);
               console.log('MY HYPERLINK RETRIEVED:***************************', hyperLink);
               console.log('WHAT TWIT??...??..??..', twitterAddress);
 
@@ -217,6 +261,18 @@ app.get('/crawl', (req, res) => {
             if (twitterArr.length !== 0) {
               return twitterArr;
             } else {
+              // turn obj into an array of obj
+              resultSoFarArr = objToArr(resultSoFar);
+              insertPromise(resultSoFarArr)
+                .then((response) => {
+                  if (response.acknowledged === true) {
+                    console.log('ALL inserts have been added to DB');
+                  }
+                })
+                .catch((err) => {
+                  console.error('SOME users were NOT added to DB', err);
+                })
+              console.log('No need to visit twitter users');
               res.send(resultSoFar);
               return;
             }
@@ -238,6 +294,18 @@ app.get('/crawl', (req, res) => {
                   })
                 })
               })
+              // insert to DB after crawling twitter users
+              resultSoFarArr = objToArr(resultSoFar);
+
+              insertPromise(resultSoFarArr)
+                .then((response) => {
+                  if (response.ok === 1) {
+                    console.log('ALL inserts have been added to DB');
+                  }
+                })
+                .catch((err) => {
+                  console.error('SOME users were NOT added to DB', err);
+                })
               res.send(resultSoFar);
             })
             .catch(err => console.error('ALL THE WAY TO TWITTER:', err))
