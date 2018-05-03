@@ -5,7 +5,11 @@ const User = require('../../db/userSchema');
 const vo = require('vo');
 
 const nightmare = Nightmare({
-  show: true
+  show: true,
+  gotoTimeout: 60000,
+  waitTimeout: 60000,
+  executionTimeout: 60000,
+  pollInterval: 500
 });
 
 let resultSoFar = {};
