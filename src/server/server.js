@@ -84,15 +84,6 @@ app.get('/crawl', (req, res) => {
     return cheerioArr;
   }; // end of run fn
 
-  let insertPromise = function * (arr) {
-    yield User.insertMany(arr, { ordered: false })
-      .then(() => ({ ok: 1 }))
-      .catch((err) => {
-        console.error('SOME did NOT get added to DB', err);
-        return;
-      })
-  }
-
   const objToArr = (obj) => {
     let result = [];
 
@@ -213,7 +204,7 @@ app.get('/crawl', (req, res) => {
             return userWebList;
           } else {
             resultSoFarArr = objToArr(resultSoFar);
-            insertPromise(resultSoFarArr)
+            User.insertMany(resultSoFarArr, { ordered: false })
               .then((response) => {
                 if (response.acknowledged === true) {
                   console.log('ALL inserts have been added to DB');
@@ -263,7 +254,7 @@ app.get('/crawl', (req, res) => {
             } else {
               // turn obj into an array of obj
               resultSoFarArr = objToArr(resultSoFar);
-              insertPromise(resultSoFarArr)
+              User.insertMany(resultSoFarArr, { ordered: false })
                 .then((response) => {
                   if (response.acknowledged === true) {
                     console.log('ALL inserts have been added to DB');
@@ -297,9 +288,9 @@ app.get('/crawl', (req, res) => {
               // insert to DB after crawling twitter users
               resultSoFarArr = objToArr(resultSoFar);
 
-              insertPromise(resultSoFarArr)
+              User.insertMany(resultSoFarArr, { ordered: false })
                 .then((response) => {
-                  if (response.ok === 1) {
+                  if (response.acknowledged === true) {
                     console.log('ALL inserts have been added to DB');
                   }
                 })
