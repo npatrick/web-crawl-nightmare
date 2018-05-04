@@ -15,10 +15,10 @@ const nightmare = Nightmare({
 let resultSoFar = {};
 let resultSoFarArr;
 
-let keyword = ['food', 'foodie', 'fashion', 'beauty', 'makeup', 'stylist', 'lifestyle',
-                'travel', 'adventure', 'adventurer', 'clothing', 'news', 'blogger',
-                'influencer', 'model', 'nutrition', 'fitness', 'wellness', 'home', 'kitchen'];
-let topDomain = ['.com', '.net', '.org', '.biz', '.info', '.email', '.ly', '.us', '.nu'];
+let keyword = ['food', 'foodie', 'style', 'fashion', 'beauty', 'makeup', 'stylist', 'lifestyle',
+                'author', 'travel', 'adventure', 'adventurer', 'clothing', 'news', 'film', 'cinema', 'blog', 'blogger',
+                'vlog', 'influencer', 'model', 'nutrition', 'fitness', 'wellness', 'home', 'kitchen'];
+let topDomain = ['.com', '.net', '.org', '.biz', '.fr', '.info', '.media', '.global', '.email', '.ly', '.us', '.nu'];
 
 let reqPromCrawl = async function (url) {
 	let options = {
@@ -40,7 +40,7 @@ let reqPromCrawl = async function (url) {
       .wait(2000)
     	.wait(selectorStr)
       .evaluate((selector) => {
-        return document.querySelector(selector).outerHTML;
+        return window.document.querySelector(selector).outerHTML;
       }, selectorStr)
       .then((el) => {
         const $ = cheerio.load(el);
@@ -97,32 +97,54 @@ let reqPromCrawl = async function (url) {
 	await rp(options)
     .then(($) => {
       const $body = $('body');
-      const resultList = $body.find('div.g');
-      // 'https://www.instagram.com/sydnesummer/'
+      let gTemp = $body.find('div.g');
+      let bTemp = $body.find('.b_algo');
+      let resultList; 
+
+      if ($(gTemp[0]).html()) {
+      // 'div.g' => google specific query results
+        resultList = gTemp;
+      } else {
+      // '.b_algo' => bing query results
+        resultList = bTemp;
+      }
       let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
       let tempInsta = [];
-      // iterate google result items to retrieve insta url to visit
-      resultList.each((index, item) => {
-        let hrefStr = $(item).find('.r > a').attr('href');
-        let indexOfCom = hrefStr.indexOf('.com/');
-        let instaUserPath = hrefStr.slice(7, hrefStr.indexOf('/', indexOfCom + 5)) + '/';
 
-        // only add profiles urls and NOT posts urls
-        if (!instaUserPath.includes('/p/')) {
-          // retrieve username from a hyperlink and set it to instaUser
-          let temp = hrefStr.slice(indexOfCom + 5);
-          let instaUser = temp.slice(0, temp.indexOf('/'))
-          tempInsta.push(instaUserPath);
-          dbUserCheck.push(instaUser);
-        }
-      })
+      if (resultList.length === 0) {
+        return
+      } else {
+        // iterate google result items to retrieve insta url to visit
+        resultList.each((index, item) => {
+          // need to check from cheerio markup results because we dont exactly
+          // get what we see on browser
+          let hrefStr = $(item).find('.r > a').attr('href') || $(item).find('.b_attribution').text();
+          let indexOfHttp = hrefStr.indexOf('http');
+          let indexOfCom = hrefStr.indexOf('.com/');
+          // g vs b => bing returns exact insta href, google doesn't...
+          let indexAfterUsername = hrefStr.indexOf('/', indexOfCom + 5);
+          if (indexAfterUsername === -1) {
+            indexAfterUsername = undefined;
+          }
+          let instaUserPath = hrefStr.slice(indexOfHttp, indexAfterUsername) + '/';
+  
+          // only add profiles urls and NOT posts urls
+          if (!instaUserPath.includes('/p/')) {
+            // retrieve username from a hyperlink and set it to instaUser
+            let temp = instaUserPath.slice(instaUserPath.indexOf('.com/') + 5);
+            let instaUser = temp.replace('/', '');
+            tempInsta.push(instaUserPath);
+            dbUserCheck.push(instaUser);
+          }
+        })
+      }
       // resultObj.instaToVisit = instaToVisit;
       resultObj.dbUserCheck = dbUserCheck;
       resultObj.tempInsta = tempInsta;
       return resultObj;
     })
     .then((resultObj) => {
-      console.log('what are my list of Links makeup to check?\n', resultObj.tempInsta);
+      console.log('Beginning of BULK DB username checking...\n', resultObj.dbUserCheck);
       // check if users already exists in db
       return User.find({ username: { $in: resultObj.dbUserCheck } }).exec();
     })
@@ -131,6 +153,7 @@ let reqPromCrawl = async function (url) {
       if (doc.length !== 0) {
         console.log('****************** Detected Existing Users in DB ******************');
         let linkArr = doc.map(item => item.data.instagramLink);
+        console.log('now filtering...');
         // filter out existing db users to visit
         tempInstaToVisit = resultObj.tempInsta.filter(gram => !linkArr.includes(gram));
       } else {
@@ -145,7 +168,7 @@ let reqPromCrawl = async function (url) {
       return;
     })
     .then((instaToVisit) => {
-      console.log('INSTAS TO VISIT:', instaToVisit);
+      // console.log('INSTAS TO VISIT:', instaToVisit);
       if (instaToVisit === undefined) {
         console.log('All Dups... no need to visit insta');
         return;
@@ -153,7 +176,7 @@ let reqPromCrawl = async function (url) {
       return vo(run(instaToVisit, '#react-root'))
         .then(cheerioArr => {
           let userWebList = [];
-          cheerioArr.forEach($insta => {
+          cheerioArr.forEach(($insta) => {
             let imageProf = $insta('._rewi8').attr('src');
             let username = $insta('._rf3jb.notranslate').attr('title');
             let followers = $insta('._fd86t').eq(1).attr('title');
@@ -188,20 +211,25 @@ let reqPromCrawl = async function (url) {
                 // find top level domain
                 topDomain.forEach(domain => {
                   if (word.includes('@') && word.includes(domain)) {
-                    resultSoFar[username].email = word;
+                    let qIndex;
+                    word.indexOf('?') === -1 ? qIndex = undefined : qIndex = word.indexOf('?');
+                    let normEmail = word.slice(0, qIndex);
+                    resultSoFar[username].email = normEmail;
                   }
                 })
               });
-              if (!resultSoFar[username].email && website && !website.includes('.fr')) {
+              if (!resultSoFar[username].email && website) {
                 userWebList.push({ username: username, website: website });
               }
-              // console.log('USER makeup so far:', resultSoFar[username]);
             }
+            console.log('USER makeup so far:', resultSoFar[username]);
             
           }) // end of forEach
+          console.log('IS THERE REALLY USER WEBS TO CHECK? #######\n', userWebList);
           if (userWebList.length !== 0) {
             return userWebList;
           } else {
+            console.log('NOW SAVING to DB... After instassss');
             resultSoFarArr = objToArr(resultSoFar);
             User.insertMany(resultSoFarArr, { ordered: false })
               .then((response) => {
@@ -231,6 +259,7 @@ let reqPromCrawl = async function (url) {
           		return;
           	}
             let twitterArr = [];
+            let facebookArr = [];
             cheerioArr.forEach(userObj => {
             	if (userObj === undefined) {
             		return;
@@ -238,26 +267,39 @@ let reqPromCrawl = async function (url) {
               let $userWeb = userObj.cheerioObj;
               let hyperLink = $userWeb('.fa-envelope').parent().attr('href') || $userWeb('.email').attr('href');
               let twitterAddress = $userWeb('.twitter > a').attr('href') ||
-              $userWeb('.twitter').attr('href') ||
-              $userWeb('.fa-twitter').parent().attr('href');
+                                   $userWeb('.twitter').attr('href') ||
+                                   $userWeb('.fa-twitter').parent().attr('href');
+              let facebookAddress = $userWeb('.fa-facebook').parent().attr('href') ||
+                                    $userWeb('.facebook > a').attr('href') ||
+                                    $userWeb('.facebook').attr('href');
+
               let emailLink;
               console.log('User checks below are for', userObj.username);
               console.log('MY HYPERLINK RETRIEVED:***************************', hyperLink);
-              console.log('WHAT TWIT??...??..??..', twitterAddress);
+              console.log('WHAT TWIT??...??..??..', twitterAddress, '\n###################');
 
               if (hyperLink) {
                 emailLink = hyperLink.slice(7); // specific to mailto href
-                resultSoFar[userObj.username].email = emailLink;
+                let qIndex;
+                emailLink.indexOf('?') === -1 ? qIndex = undefined : qIndex = emailLink.indexOf('?');
+                let normEmail = emailLink.slice(0, qIndex).replace('%20', '');
+                resultSoFar[userObj.username].email = normEmail;
               } else {
                 if (twitterAddress) {
                   console.log('VISITING TWIT...', twitterAddress);
                   twitterArr.push({ username: userObj.username, website: twitterAddress });
+                }
+                // need to eventually handle facebook crawling
+                if (facebookAddress) {
+                  console.log('can visit facebook......', facebookAddress);
+                  facebookArr.push({ username: userObj.username, website: facebookAddress })
                 }
               }
             })
             if (twitterArr.length !== 0) {
               return twitterArr;
             } else {
+              console.log('SAVING TO DB !! After user site...')
               // turn obj into an array of obj
               resultSoFarArr = objToArr(resultSoFar);
               User.insertMany(resultSoFarArr, { ordered: false })
@@ -292,6 +334,7 @@ let reqPromCrawl = async function (url) {
                   })
                 })
               })
+              console.log('=!=!=> Saving to DB... after.. twitter......');
               // insert to DB after crawling twitter users
               resultSoFarArr = objToArr(resultSoFar);
 
