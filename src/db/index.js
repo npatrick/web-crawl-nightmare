@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
-let mongoUri = `mongodb://${process.env.dbUser}:${process.env.dbPass}@ds014648.mlab.com:14648/email-list`;
+let mongoUri;
+
+if (process.env.NODE_ENV !== 'production') {
+	mongoUri = `mongodb://localhost/web-crawl`;
+} else {
+	mongoUri = `mongodb://${process.env.dbUser}:${process.env.dbPass}@ds014648.mlab.com:14648/email-list`;
+}
 
 const dbOptions = {
 	autoReconnect: true,
