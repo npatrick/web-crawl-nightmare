@@ -16,7 +16,7 @@ app.use(logger('dev'));
 
 db.on('open', () => {
   const googleQuery = 'https://www.google.com/search?q=site:www.instagram.com+%22los+angeles%22+LA+blogger';
-  const gMax = 32;
+  const gMax = 32; // 32 max
   let segment;
 
   const reqPromCrawl = require('./controllers/reqPromCrawl');
@@ -41,7 +41,7 @@ db.on('open', () => {
   // searchArr = [];
 
   const bingQuery = 'https://www2.bing.com/search?q=site%3ainstagram.com+"Los+Angeles"+LA+blogger';
-  const bMax = 72;
+  const bMax = 3; // 72 max
   let pageSector;
 
   for (let j = 0; j < bMax; j++) {
