@@ -53,13 +53,15 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
 	           }
 	            let $userWeb = userObj.cheerioObj;
 	            let hyperLink = $userWeb('.fa-envelope').parent().attr('href') ||
-	            								$userWeb('.sow-social-media-button-envelope') ||
+	            								$userWeb('.sow-social-media-button-envelope').attr('href') ||
 	            								$userWeb('.email').attr('href');
 	            let twitterAddress = $userWeb('.twitter > a').attr('href') ||
 	                                 $userWeb('.twitter').attr('href') ||
+	                                 $userWeb('.sow-social-media-button-twitter').attr('href') ||
 	                                 $userWeb('.social-twitter').parent().attr('href') ||
 	                                 $userWeb('.fa-twitter').parent().attr('href');
 	            let facebookAddress = $userWeb('.fa-facebook').parent().attr('href') ||
+	            											$userWeb('.sow-social-media-button-facebook').attr('href') ||
 	            											$userWeb('.social-facebook').parent().attr('href') ||
 	                                  $userWeb('.facebook > a').attr('href') ||
 	                                  $userWeb('.facebook').attr('href');
