@@ -19,7 +19,9 @@ const userSchema = Schema({
 			website: String,
 			bio: String,
 			category: Array,
-			email: String
+			email: String,
+			twitter: String,
+			facebook: String
 		}
 	}
 });
