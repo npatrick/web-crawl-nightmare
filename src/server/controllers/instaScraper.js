@@ -98,7 +98,7 @@ const instaScraper = async function(url) {
         console.log('All Dups... no need to visit insta');
         return;
       }
-      return vo(run(instaToVisit, '#react-root'))
+      return vo(run(instaToVisit, '#react-root', false))
         .then(cheerioArr => {
           let userWebList = [];
           cheerioArr.forEach(($insta) => {

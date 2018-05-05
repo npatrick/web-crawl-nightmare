@@ -5,6 +5,7 @@ const beginNightmare = require('./beginNightmare');
  * 
  * @param {String, Array} destination
  * @param {String} qSelect
+ * @param {Boolean} isUserWeb
  * @yield {Function} this fn returns an array of objects depending
  *                   on the passed destination arg, for ex.:
  *                   if a String is passed, no username included
@@ -14,7 +15,7 @@ const beginNightmare = require('./beginNightmare');
  *                   of objects will be returned:
  *                   {username: 'username', cheerioObj: fn}
  */
-const run = function * (destination, qSelect) {
+const run = function * (destination, qSelect, isUserWeb) {
   let normalizeParam;
   let cheerioArr = [];
 
@@ -26,10 +27,10 @@ const run = function * (destination, qSelect) {
   for (let i = 0; i < normalizeParam.length; i++ ) {
     let $cheerioObj;
     if (normalizeParam[i] !== null && typeof normalizeParam[i] === 'object') {
-      $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect);
+      $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect, isUserWeb);
       cheerioArr.push({ username: normalizeParam[i].username, cheerioObj: $cheerioObj });
     } else {
-      $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect);
+      $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect, isUserWeb);
       cheerioArr.push($cheerioObj);
     }
   } // end of for loop
