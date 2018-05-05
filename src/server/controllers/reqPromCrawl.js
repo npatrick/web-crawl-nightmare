@@ -28,6 +28,7 @@ let reqPromCrawl = async function (url) {
       //        }
       //         let $userWeb = userObj.cheerioObj;
       //         let hyperLink = $userWeb('.fa-envelope').parent().attr('href') || $userWeb('.email').attr('href');
+/////////////////////////////////////// CHECKS for twitter & FB ////////////////////
       //         let twitterAddress = $userWeb('.twitter > a').attr('href') ||
       //                              $userWeb('.twitter').attr('href') ||
       //                              $userWeb('.fa-twitter').parent().attr('href');
@@ -47,6 +48,7 @@ let reqPromCrawl = async function (url) {
       //           let normEmail = emailLink.slice(0, qIndex).replace('%20', '');
       //           resultSoFar[userObj.username].email = normEmail;
       //         } else {
+        ////////////////////////// to add for twitter /////////////////////////
       //           if (twitterAddress) {
       //             console.log('VISITING TWIT...', twitterAddress);
       //             twitterArr.push({ username: userObj.username, website: twitterAddress });
@@ -61,6 +63,7 @@ let reqPromCrawl = async function (url) {
       //       if (twitterArr.length !== 0) {
       //         return twitterArr;
       //       } else {
+        ////////////////////////////////////////////////////////
       //         console.log('SAVING TO DB !! After user site...')
       //         // turn obj into an array of obj
       //         resultSoFarArr = objToArr(resultSoFar);
