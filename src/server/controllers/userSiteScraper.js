@@ -63,15 +63,23 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
 	            let emailLink;
 	            console.log('User email for', userObj.username, '=====>', hyperLink);
 
+            	// create the resultSoFar object to prep for adding data props
+            	resultSoFar[userObj.username] = {};
 	            if (hyperLink) {
-	            	// create the resultSoFar object for users that has email retrieved
-	            	resultSoFar[userObj.username] = {};
 	              emailLink = hyperLink.slice(7); // specific to mailto href
 	              let qIndex;
 	              emailLink.indexOf('?') === -1 ? qIndex = undefined : qIndex = emailLink.indexOf('?');
 	              let normEmail = emailLink.slice(0, qIndex).replace('%20', '');
 	              resultSoFar[userObj.username].email = normEmail;
 	            }
+	            if (twitterAddress) {
+                console.log('Got twit...', twitterAddress);
+                resultSoFar[userObj.username].website = twitterAddress;
+              }
+              if (facebookAddress) {
+                console.log('Got fb....', facebookAddress);
+                resultSoFar[userObj.username].website = facebookAddress;
+              }
           	}) // end of forEach
 	          // turn obj into an array of obj
 	          resultSoFarArr = objToArr(resultSoFar);
