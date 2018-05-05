@@ -16,12 +16,12 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
   		// null will return docs w/ null values and non-existent field
   		'data.email': null
   	})
-  	.limit(10)
+  	// .limit(10)
   	.select('username data.website')
   	.exec()
   	.then((doc) => {
   		let userWebList = [];
-			console.log('hmmmmmmm WHAT DID I GET FROM DOC?\n', doc);
+			// console.log('hmmmmmmm WHAT DID I GET FROM DOC?\n', doc);
   		if (doc.length === 0) {
   			console.log('All got emails :)');
   			return;
@@ -55,8 +55,10 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
 	            let hyperLink = $userWeb('.fa-envelope').parent().attr('href') || $userWeb('.email').attr('href');
 	            let twitterAddress = $userWeb('.twitter > a').attr('href') ||
 	                                 $userWeb('.twitter').attr('href') ||
+	                                 $userWeb('.social-twitter').parent().attr('href') ||
 	                                 $userWeb('.fa-twitter').parent().attr('href');
 	            let facebookAddress = $userWeb('.fa-facebook').parent().attr('href') ||
+	            											$userWeb('.social-facebook').parent().attr('href') ||
 	                                  $userWeb('.facebook > a').attr('href') ||
 	                                  $userWeb('.facebook').attr('href');
 
