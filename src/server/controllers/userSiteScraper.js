@@ -52,7 +52,9 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
 	             return;
 	           }
 	            let $userWeb = userObj.cheerioObj;
-	            let hyperLink = $userWeb('.fa-envelope').parent().attr('href') || $userWeb('.email').attr('href');
+	            let hyperLink = $userWeb('.fa-envelope').parent().attr('href') ||
+	            								$userWeb('.sow-social-media-button-envelope') ||
+	            								$userWeb('.email').attr('href');
 	            let twitterAddress = $userWeb('.twitter > a').attr('href') ||
 	                                 $userWeb('.twitter').attr('href') ||
 	                                 $userWeb('.social-twitter').parent().attr('href') ||
