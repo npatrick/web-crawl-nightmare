@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=development node ./src/server/index.js",
-    "debug": "DEBUG=nightmare* node ./src/server/server.js",
+    "debug": "DEBUG=nightmare:actions* NODE_ENV=development node ./src/server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
