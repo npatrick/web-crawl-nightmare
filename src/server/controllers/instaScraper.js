@@ -11,7 +11,7 @@ let resultSoFarArr;
 let keyword = ['food', 'foodie', 'style', 'fashion', 'beauty', 'makeup', 'stylist', 'lifestyle',
                 'author', 'travel', 'adventure', 'adventurer', 'clothing', 'news', 'film', 'cinema', 'blog', 'blogger',
                 'vlog', 'influencer', 'model', 'nutrition', 'fitness', 'wellness', 'home', 'kitchen'];
-let topDomain = ['.com', '.net', '.org', '.biz', '.fr', '.info', '.media', '.global', '.email', '.ly', '.us', '.nu'];
+let topDomain = ['.com', '.Com', '.net', '.org', '.biz', '.fr', '.info', '.media', '.global', '.email', '.ly', '.us', '.nu'];
 
 const instaScraper = async function(url) {
 	let options = {
