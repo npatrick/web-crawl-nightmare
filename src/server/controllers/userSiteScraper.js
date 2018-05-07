@@ -42,7 +42,7 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
       console.log('ENTERING USER WEB CHECK...\nwhat is userWebList:', userWebList);
       return vo(run(userWebList, 'body', true))
         .then(cheerioArr => {
-	         if (cheerioArr === undefined) {
+	         if (cheerioArr === undefined || cheerioArr === null) {
 	           return;
 	         }
 	          let twitterArr = [];
