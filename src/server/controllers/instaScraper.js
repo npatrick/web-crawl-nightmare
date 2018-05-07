@@ -29,11 +29,13 @@ const instaScraper = async function(url) {
       let resultList; 
 
       if ($(gTemp[0]).html()) {
-      // 'div.g' => google specific query results
+      	// 'div.g' => google specific query results
         resultList = gTemp;
-      } else {
-      // '.b_algo' => bing query results
+      } else if ($(bTemp[0]).html()){
+      	// '.b_algo' => bing query results
         resultList = bTemp;
+      } else {
+      	return;
       }
       let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
       let tempInsta = [];
@@ -54,7 +56,6 @@ const instaScraper = async function(url) {
             indexAfterUsername = undefined;
           }
           let instaUserPath = hrefStr.toLowerCase().slice(indexOfHttp, indexAfterUsername) + '/';
-  
           // only add profiles urls and NOT posts urls
           if (!instaUserPath.includes('/p/') && !instaUserPath.includes('/explore/')) {
             // retrieve username from a hyperlink and set it to instaUser
@@ -65,14 +66,13 @@ const instaScraper = async function(url) {
           }
         })
       }
-      resultObj.dbUserCheck = dbUserCheck;
-      resultObj.tempInsta = tempInsta;
+      resultObj.dbUserCheck = dbUserCheck; // array of usernames
+      resultObj.tempInsta = tempInsta; // array of insta urls
       return resultObj;
     })
     .then((resultObj) => {
-      console.log('Beginning of BULK DB username checking...\n', resultObj.dbUserCheck);
       // check if users already exists in db
-      return User.find({ username: { $in: resultObj.dbUserCheck } }).exec();
+      return resultObj ? User.find({ username: { $in: resultObj.dbUserCheck } }).exec() : [];
     })
     .then((doc) => {
       let tempInstaToVisit;
@@ -82,6 +82,7 @@ const instaScraper = async function(url) {
         console.log('now filtering...');
         // filter out existing db users to visit
         tempInstaToVisit = resultObj.dbUserCheck.filter(gram => !linkArr.includes(gram));
+      	tempInstaToVisit = tempInstaToVisit.map(item => `instagram.com/${item}`);
       } else {
         // all are new
         console.log('ALL ARE NEW!', doc);
@@ -94,7 +95,7 @@ const instaScraper = async function(url) {
       return;
     })
     .then((instaToVisit) => {
-      if (instaToVisit.length === 0) {
+      if (!instaToVisit || instaToVisit.length === 0) {
         console.log('All Dups... no need to visit insta');
         return;
       }
