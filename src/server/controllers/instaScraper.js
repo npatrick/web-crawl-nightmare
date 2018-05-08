@@ -4,6 +4,24 @@ const User = require('../../db/userSchema');
 const vo = require('vo');
 const run = require('../helperFn/run');
 const objToArr = require('../helperFn/objToArr');
+const Crawler = require('crawler');
+
+const c = new Crawler({ rateLimit: 3000 });
+
+function crawlerPromise(options) {
+	return new Promise((resolve, reject) => {
+		options.callback = (err, res, done) => {
+			if (err) {
+				reject(err)
+			} else {
+				let $ = res.$;
+				resolve($);
+			}
+			done();
+		}
+		c.queue(options);
+	});
+}
 
 let resultSoFar = {};
 let resultSoFarArr;
@@ -14,20 +32,20 @@ let keyword = ['food', 'foodie', 'style', 'fashion', 'beauty', 'makeup', 'stylis
 let topDomain = ['.com', '.Com', '.net', '.org', '.biz', '.fr', '.info', '.media', '.global', '.email', '.ly', '.us', '.nu'];
 
 const instaScraper = async function(url) {
-	let options = {
-    uri: url,
-    transform: (body) => cheerio.load(body)
-  };
+
+	// let options = {
+ //    uri: url,
+ //    transform: (body) => cheerio.load(body)
+ //  };
 
   let resultObj = {};
 
-	await rp(options)
+	await crawlerPromise({ uri: url })
     .then(($) => {
       const $body = $('body');
       let gTemp = $body.find('div.g');
       let bTemp = $body.find('.b_algo');
       let resultList; 
-
       if ($(gTemp[0]).html()) {
       	// 'div.g' => google specific query results
         resultList = gTemp;
