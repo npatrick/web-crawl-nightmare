@@ -4,30 +4,58 @@ const vo = require('vo');
 const run = require('../helperFn/run');
 const objToArr = require('../helperFn/objToArr');
 
+let lastId;
 
-const userSiteScraper = async function() { // integrate accepting an array of obj {user, website}
+const userSiteScraper = async function(idToStart) { // integrate accepting an array of obj {user, website}
   let resultObj = {};
 	let resultSoFar = {};
 	let resultSoFarArr;
 
-  await User
-  	.find({
-  		// null is better than using {$exists: false}
-  		// null will return docs w/ null values and non-existent field
-  		'data.email': null
-  	})
-  	// .limit(10)
-  	.select('username data.website')
-  	.exec()
+	async function grabNonEmailUsers(lastIndex) {
+		if (lastIndex) {
+			return await User
+				.find({
+		  		// null is better than using {$exists: false}
+		  		// null will return docs w/ null values and non-existent field
+		  		'data.email': null,
+		  		_id: { '$lt': lastIndex }
+				})
+				.limit(10)
+		  	.sort({'_id': 1})
+		  	.select('username data.website')
+		  	.exec()
+		}
+		return await User
+			.find({
+				// null is better than using {$exists: false}
+	  		// null will return docs w/ null values and non-existent field
+	  		'data.email': null
+	  	})
+	  	.limit(10)
+	  	.sort({'_id': 1})
+	  	.select('username data.website')
+	  	.exec()
+	}
+
+	// search for data.email == null
+	// take only 50 and oldest ones set it to docs
+	// iterate docs
+		// the rest follows through up until setting the next segment
+		// (userSiteScraper)
+	await grabNonEmailUsers(lastId)
   	.then((doc) => {
   		let userWebList = [];
-			// console.log('hmmmmmmm WHAT DID I GET FROM DOC?\n', doc);
+			console.log('hmmmmmmm WHAT DID I GET FROM DOC?\n', doc);
   		if (doc.length === 0) {
   			console.log('All got emails :)');
   			return;
   		} else {
-  			doc.forEach((item) => {
+  			doc.forEach((item, index) => {
   				if (item.data.website) {
+  					if (index == 9) {
+  						lastId = item._id;
+
+  					}
   					userWebList.push({ username: item.username, website: item.data.website });
   				}
   			})
@@ -35,20 +63,21 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
   		return userWebList;
   	})
   	.then((userWebList) => {
+  		console.log('DID I GET A LAST ID ?? ==>', lastId);
       if (userWebList === undefined) {
         console.log('No need to visit user webs');
         return;
       }
       console.log('ENTERING USER WEB CHECK...\nwhat is userWebList:', userWebList);
       return vo(run(userWebList, 'body', true))
-        .then(cheerioArr => {
+        .then(async (cheerioArr) => {
 	         if (cheerioArr === undefined || cheerioArr === null) {
 	           return;
 	         }
 	          let twitterArr = [];
 	          let facebookArr = [];
 	          cheerioArr.forEach(userObj => {
-	           if (userObj === undefined) {
+	           if (userObj === undefined || userObj.cheerioObj === undefined) {
 	             return;
 	           }
 	            let $userWeb = userObj.cheerioObj;
@@ -80,11 +109,11 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
 	            }
 	            if (twitterAddress) {
                 console.log('Got twit...', twitterAddress);
-                resultSoFar[userObj.username].website = twitterAddress;
+                resultSoFar[userObj.username].twitter = twitterAddress;
               }
               if (facebookAddress) {
                 console.log('Got fb....', facebookAddress);
-                resultSoFar[userObj.username].website = facebookAddress;
+                resultSoFar[userObj.username].facebook = facebookAddress;
               }
           	}) // end of forEach
 	          // turn obj into an array of obj
@@ -104,11 +133,10 @@ const userSiteScraper = async function() { // integrate accepting an array of ob
   	          return User.bulkWrite(bulkUpdate, { ordered: false });
   	        }
   	        console.log('NOTHING TO UPDATE');
-  	        return;
           })
         	.then((response) => {
         		console.log('UPDATED ALL ! Response is here...\n', response);
-        		return;
+        		return userSiteScraper(lastId);
         	})
         	.catch((err) => {
         		console.log('ERROR IN BULK WRITE ==>\n', err);

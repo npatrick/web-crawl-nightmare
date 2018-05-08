@@ -62,7 +62,7 @@ const beginNightmare = (domain, selectorStr, isUserWeb) => {
         })
         .catch(error => {
           console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
-          if (error.details == 'Navigation timed out after 60000 ms') {
+          if (error.details == 'Navigation timed out after 30000 ms') {
             console.log('I got error details, seeeeee =>', error.details);
             return beginNightmare;
           }
