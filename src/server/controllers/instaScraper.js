@@ -157,7 +157,10 @@ const instaScraper = async function(url) {
                   if (word.includes('@') && word.includes(domain)) {
                     let qIndex;
                     word.indexOf('?') === -1 ? qIndex = undefined : qIndex = word.indexOf('?');
-                    let normEmail = word.slice(0, qIndex);
+                    let tempEmail = word.slice(0, qIndex);
+                    let normEmail;
+                    (tempEmail.includes(':')) ? normEmail = tempEmail.slice(tempEmail.indexOf(':') + 1) : normEmail = tempEmail;
+
                     resultSoFar[username].email = normEmail;
                   }
                 })
