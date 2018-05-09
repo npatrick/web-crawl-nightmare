@@ -1,6 +1,6 @@
 const rp = require('request-promise');
 const cheerio = require('cheerio');
-const User = require('../../db/userSchema');
+const InstaUser = require('../../db/instaUserSchema');
 const vo = require('vo');
 const run = require('../helperFn/run');
 const objToArr = require('../helperFn/objToArr');
@@ -90,7 +90,7 @@ const instaScraper = async function(url) {
     })
     .then((resultObj) => {
       // check if users already exists in db
-      return resultObj ? User.find({ username: { $in: resultObj.dbUserCheck } }).exec() : [];
+      return resultObj ? InstaUser.find({ username: { $in: resultObj.dbUserCheck } }).exec() : [];
     })
     .then((doc) => {
       let tempInstaToVisit;
@@ -135,7 +135,7 @@ const instaScraper = async function(url) {
                 fullName: fullName,
                 imageProf: imageProf,
                 followers: followers,
-                website: website,
+                website: website.length > 1 ? website : null,
                 bio: bio,
                 category: []
               };
@@ -172,7 +172,7 @@ const instaScraper = async function(url) {
           console.log('NOW SAVING to DB... After instassss');
           resultSoFarArr = objToArr(resultSoFar);
           resultSoFar = {};
-          return User.insertMany(resultSoFarArr, { ordered: false });
+          return InstaUser.insertMany(resultSoFarArr, { ordered: false });
         })
         .then((response) => {
           if (response.acknowledged === true) {

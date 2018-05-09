@@ -1,10 +1,11 @@
 const cheerio = require('cheerio');
-const User = require('../../db/userSchema');
+const InstaUser = require('../../db/instaUserSchema');
 const vo = require('vo');
 const run = require('../helperFn/run');
 const objToArr = require('../helperFn/objToArr');
 
 let lastId;
+let nextRound;
 
 const userSiteScraper = async function(idToStart) { // integrate accepting an array of obj {user, website}
   let resultObj = {};
@@ -13,23 +14,32 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
 
 	async function grabNonEmailUsers(lastIndex) {
 		if (lastIndex) {
-			return await User
+			return await InstaUser
 				.find({
 		  		// null is better than using {$exists: false}
 		  		// null will return docs w/ null values and non-existent field
-		  		'data.email': null,
-		  		_id: { '$lt': lastIndex }
+		  		$and: [
+		  			{ 'data.website': { $exists: true } },
+		  			{ 'data.email': null },
+		  			{ 'data.twitter': null },
+		  			{ 'data.facebook': null }
+		  		],
+		  		_id: { '$gt': lastIndex }
 				})
 				.limit(10)
 		  	.sort({'_id': 1})
 		  	.select('username data.website')
 		  	.exec()
 		}
-		return await User
+		return await InstaUser
 			.find({
 				// null is better than using {$exists: false}
 	  		// null will return docs w/ null values and non-existent field
-	  		'data.email': null
+	  		$and: [
+	  			{ 'data.email': null },
+	  			{ 'data.twitter': null },
+	  			{ 'data.facebook': null }
+	  		],
 	  	})
 	  	.limit(10)
 	  	.sort({'_id': 1})
@@ -37,12 +47,7 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
 	  	.exec()
 	}
 
-	// search for data.email == null
-	// take only 50 and oldest ones set it to docs
-	// iterate docs
-		// the rest follows through up until setting the next segment
-		// (userSiteScraper)
-	await grabNonEmailUsers(lastId)
+	await grabNonEmailUsers(idToStart)
   	.then((doc) => {
   		let userWebList = [];
 			console.log('hmmmmmmm WHAT DID I GET FROM DOC?\n', doc);
@@ -50,12 +55,15 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
   			console.log('All got emails :)');
   			return;
   		} else {
+  			if (doc.length < 10) {
+  				console.log('WE HAVE LESS THAN 10');
+  				nextRound = null;
+  			}
   			doc.forEach((item, index) => {
+					if (index == 9) {
+						lastId = item._id;
+					}
   				if (item.data.website) {
-  					if (index == 9) {
-  						lastId = item._id;
-
-  					}
   					userWebList.push({ username: item.username, website: item.data.website });
   				}
   			})
@@ -68,7 +76,7 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
         console.log('No need to visit user webs');
         return;
       }
-      console.log('ENTERING USER WEB CHECK...\nwhat is userWebList:', userWebList);
+      console.log('ENTERING USER WEB CHECK...\nwhat is userWebList below:\n', userWebList);
       return vo(run(userWebList, 'body', true))
         .then(async (cheerioArr) => {
 	         if (cheerioArr === undefined || cheerioArr === null) {
@@ -77,7 +85,7 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
 	          let twitterArr = [];
 	          let facebookArr = [];
 	          cheerioArr.forEach(userObj => {
-	           if (userObj === undefined || userObj.cheerioObj === undefined) {
+	           if (userObj === undefined || typeof userObj.cheerioObj !== 'function') {
 	             return;
 	           }
 	            let $userWeb = userObj.cheerioObj;
@@ -124,19 +132,28 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
   	          	return {
   	          		updateOne: {
   	          			filter: { username: obj.username },
-  	          			update: { 'data.email': obj.data.email }
+  	          			update: { 
+  	          				'data.email': obj.data.email,
+  	          				'data.twitter': obj.data.twitter,
+  	          				'data.facebook': obj.data.facebook
+  	          			}
   	          		}
   	          	}
   	          });
-  
   	          resultSoFar = {};
-  	          return User.bulkWrite(bulkUpdate, { ordered: false });
+  	          return InstaUser.bulkWrite(bulkUpdate, { ordered: false });
   	        }
   	        console.log('NOTHING TO UPDATE');
           })
         	.then((response) => {
         		console.log('UPDATED ALL ! Response is here...\n', response);
-        		return userSiteScraper(lastId);
+        		if (nextRound === null) {
+        			console.log('NO MORE...', nextRound);
+        			return null;
+        		} else {
+        			console.log('NEXT ROUND AGAIN...', nextRound);
+        			return userSiteScraper(lastId);
+        		}
         	})
         	.catch((err) => {
         		console.log('ERROR IN BULK WRITE ==>\n', err);
