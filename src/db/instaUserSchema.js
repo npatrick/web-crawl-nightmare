@@ -5,7 +5,7 @@ let Schema = mongoose.Schema;
 mongoose.Promise = global.Promise;
 const db = require('./index');
 
-const userSchema = Schema({
+const instaUserSchema = Schema({
 	username: {
 		type: String,
 		unique: true
@@ -19,11 +19,13 @@ const userSchema = Schema({
 			website: String,
 			bio: String,
 			category: Array,
-			email: String
+			email: String,
+			twitter: String,
+			facebook: String
 		}
 	}
 });
 
-const User = mongoose.model('User', userSchema);
+const InstaUser = mongoose.model('InstaUser', instaUserSchema);
 
-module.exports = User;
+module.exports = InstaUser;
