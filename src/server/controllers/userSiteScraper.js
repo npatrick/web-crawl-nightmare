@@ -155,13 +155,18 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
   	        console.log('NOTHING TO UPDATE');
           })
         	.then((response) => {
+      			let timeNow = new Date();
         		console.log('UPDATED ALL ! Response is available check above list...\n');
-        		console.log('Insert Count:', response.insertedCount);
-        		console.log('Match Count:', response.matchedCount);
-        		console.log('Modified Count:', response.modifiedCount);
-        		console.log('Upsert Count:', response.upsertedCount);
+        		if (response.insertedCount) {
+	        		console.log('Insert Count:', response.insertedCount);
+	        		console.log('Match Count:', response.matchedCount);
+	        		console.log('Modified Count:', response.modifiedCount);
+	        		console.log('Upsert Count:', response.upsertedCount);
+        		} else {
+        			console.log('Time @ unforseen:', timeNow.toISOString());
+        			console.log('Something else happened... =>', response);
+        		}
         		if (nextRound === null) {
-        			let timeNow = new Date();
         			console.log('NO MORE...', nextRound);
         			console.log('Time scraper ended:', timeNow.toISOString());
         			return null;
@@ -171,6 +176,8 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
         		}
         	})
         	.catch((err) => {
+        		let errorTime = new Date();
+        		console.log('Error time is:', errorTime.toISOString());
         		console.log('ERROR down the line ==>\n', err);
         	})
         })
