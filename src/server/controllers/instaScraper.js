@@ -5,6 +5,7 @@ const vo = require('vo');
 const run = require('../helperFn/run');
 const objToArr = require('../helperFn/objToArr');
 const Crawler = require('crawler');
+const { keyword, topDomain } = require('../../misc/resource');
 
 const c = new Crawler({ rateLimit: 3000 });
 
@@ -25,11 +26,6 @@ function crawlerPromise(options) {
 
 let resultSoFar = {};
 let resultSoFarArr;
-
-let keyword = ['food', 'foodie', 'style', 'fashion', 'beauty', 'makeup', 'stylist', 'lifestyle',
-                'author', 'travel', 'adventure', 'adventurer', 'clothing', 'news', 'film', 'cinema', 'blog', 'blogger',
-                'vlog', 'influencer', 'model', 'nutrition', 'fitness', 'wellness', 'home', 'kitchen'];
-let topDomain = ['.com', '.Com', '.net', '.org', '.biz', '.fr', '.info', '.media', '.global', '.email', '.ly', '.us', '.nu'];
 
 const instaScraper = async function(url) {
 
