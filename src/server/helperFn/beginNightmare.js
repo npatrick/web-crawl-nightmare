@@ -37,7 +37,8 @@ const beginNightmare = (domain, selectorStr, isUserWeb) => {
   	let normalizeDomain = '';
     let siteBlacklisted = false;
     const blackList = ['vogue.com', 'vogue', 'consumingla.com', 'okayafrica.com', 
-                      'amodelsguide.com', 'theclothing-twpm.com'];
+                      'amodelsguide.com', 'theclothing-twpm.com', 'amazon.com',
+                      'dodgers.com'];
     blackList.forEach((url) => {
       if (domain.toLowerCase().includes(url)) {
         siteBlacklisted = true;
