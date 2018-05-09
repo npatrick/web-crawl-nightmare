@@ -95,9 +95,11 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
 	            let twitterAddress = $userWeb('.twitter > a').attr('href') ||
 	                                 $userWeb('.twitter').attr('href') ||
 	                                 $userWeb('.sow-social-media-button-twitter').attr('href') ||
+	                                 $userWeb('.socicon-twitter').parent().attr('href') ||
 	                                 $userWeb('.social-twitter').parent().attr('href') ||
 	                                 $userWeb('.fa-twitter').parent().attr('href');
 	            let facebookAddress = $userWeb('.fa-facebook').parent().attr('href') ||
+	            											$userWeb('.socicon-facebook').parent().attr('href') ||
 	            											$userWeb('.sow-social-media-button-facebook').attr('href') ||
 	            											$userWeb('.social-facebook').parent().attr('href') ||
 	                                  $userWeb('.facebook > a').attr('href') ||
