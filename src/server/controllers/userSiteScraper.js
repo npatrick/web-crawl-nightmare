@@ -19,7 +19,7 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
 		  		// null is better than using {$exists: false}
 		  		// null will return docs w/ null values and non-existent field
 		  		$and: [
-		  			{ 'data.website': { $exists: true } },
+		  			{ 'data.website': { $ne: null } },
 		  			{ 'data.email': null },
 		  			{ 'data.twitter': null },
 		  			{ 'data.facebook': null }
@@ -85,10 +85,13 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
 	          let twitterArr = [];
 	          let facebookArr = [];
 	          cheerioArr.forEach(userObj => {
-	           if (userObj === undefined || typeof userObj.cheerioObj !== 'function') {
-	             return;
-	           }
+	          	// consider blackisted cheerioObj that has a value of undefined
+	           	if (userObj.cheerioObj === undefined) {
+	            	return;
+	          	}
 	            let $userWeb = userObj.cheerioObj;
+	            console.log('what is the username', userObj.username);
+	            console.log('what is $userWeb ============>', typeof $userWeb);
 	            let hyperLink = $userWeb('.fa-envelope').parent().attr('href') ||
 	            								$userWeb('.sow-social-media-button-envelope').attr('href') ||
 	            								$userWeb('.email').attr('href');
@@ -113,7 +116,11 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
 	            if (hyperLink) {
 	              emailLink = hyperLink.slice(7); // specific to mailto href
 	              let qIndex;
-	              emailLink.indexOf('?') === -1 ? qIndex = undefined : qIndex = emailLink.indexOf('?');
+	              if (emailLink.indexOf('?') === -1) {
+	              	qIndex = undefined;
+	              } else { 
+	              	qIndex = emailLink.indexOf('?');
+	              }
 	              let normEmail = emailLink.slice(0, qIndex).replace('%20', '');
 	              resultSoFar[userObj.username].email = normEmail;
 	            }
@@ -148,17 +155,23 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
   	        console.log('NOTHING TO UPDATE');
           })
         	.then((response) => {
-        		console.log('UPDATED ALL ! Response is here...\n', response);
+        		console.log('UPDATED ALL ! Response is available check above list...\n');
+        		console.log('Insert Count:', response.insertedCount);
+        		console.log('Match Count:', response.matchedCount);
+        		console.log('Modified Count:', response.modifiedCount);
+        		console.log('Upsert Count:', response.upsertedCount);
         		if (nextRound === null) {
+        			let timeNow = new Date();
         			console.log('NO MORE...', nextRound);
+        			console.log('Time scraper ended:', timeNow.toISOString());
         			return null;
         		} else {
         			console.log('NEXT ROUND AGAIN...', nextRound);
-        			return userSiteScraper(lastId);
+        			userSiteScraper(lastId);
         		}
         	})
         	.catch((err) => {
-        		console.log('ERROR IN BULK WRITE ==>\n', err);
+        		console.log('ERROR down the line ==>\n', err);
         	})
         })
         .catch(err => console.error('Near user personal web:', err))
