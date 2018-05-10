@@ -97,8 +97,7 @@ const facebookScraper = async function(idToStart) {
 						return;
 					}
 					cheerioArr.forEach((userObj) => {
-						console.log('facebook for username:', userObj.username);
-						console.log('type of his/her cheerioObj ====>', typeof userObj.cheerioObj);
+						resultSoFar[userObj.username] = {};
 						if (userObj.cheerioObj) {
 							let $ = userObj.cheerioObj;
 							let tempEmail = $('._50f4').filter(function(i, elem) {
@@ -110,31 +109,37 @@ const facebookScraper = async function(idToStart) {
 							console.log('did i get the email? ==>', tempEmail);
 							if (tempEmail) {
 								let hyperlink = tempEmail.slice(tempEmail.indexOf(':') + 1, tempEmail.indexOf('?'));
-								resultSoFar[userObj.username] = {};
 								resultSoFar[userObj.username].email = hyperlink;
 							}
 						}
 					}) // end of forEach
 					resultSoFarArr = objToArr(resultSoFar);
-					console.log('Result arr to be saved ==>\n', resultSoFarArr);
 					if (resultSoFarArr.length !== 0) {
-						let bulkUpdate = resultSoFarArr.map((obj) => {
-							return {
-								updateOne: {
-									filter: { username: obj.username },
-									update: {
-										'data.email': obj.data.email
+						let bulkUpdate = resultSoFarArr.reduce((acc, obj) => {
+							if (obj.data.email) {
+								acc.push({
+									updateOne: {
+										filter: { username: obj.username },
+										update: {
+											'data.email': obj.data.email
+										}
 									}
-								}
+								});
 							}
-						});
+							return acc;
+						}, []);
 						resultSoFar = {};
-						return InstaUser.bulkWrite(bulkUpdate);
+						console.log('Bulk updating to be done ==>\n', bulkUpdate);
+						return (bulkUpdate.length !== 0) ? InstaUser.bulkWrite(bulkUpdate) : 'Nothing to update';
 					}
 				})
 				.then((response) => {
 					let timeNow = new Date();
-					console.log('Updated all ! @ time:', timeNow.toISOString());
+					if (response == 'Nothing to update') {
+						console.log(response);
+					} else {
+						console.log('Updated all ! @ time:', timeNow.toISOString());
+					}
 					if (nextRound === null) {
 						console.log('nextRound is now null');
 						return;

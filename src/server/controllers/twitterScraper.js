@@ -110,7 +110,7 @@ const twitterScraper = async function (idToStart) {
 											'data.email': obj.data.email
 										}
 									}
-								})
+								});
 							}
 							return acc;
 						}, []);
