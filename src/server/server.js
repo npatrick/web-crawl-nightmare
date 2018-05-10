@@ -9,6 +9,8 @@ const vo = require('vo');
 const mongoose = require('mongoose');
 const db = require('../db/index');
 const userSiteScraper = require('./controllers/userSiteScraper');
+const twitterScraper = require('./controllers/twitterScraper');
+const facebookScraper = require('./controllers/facebookScraper');
 
 const app = express();
 
@@ -66,7 +68,13 @@ db.on('open', () => {
 
   // searchArr = [];
 ////////////////////// USER WEB AREA ////////////////////////
-  userSiteScraper();
+  // userSiteScraper();
+
+////////////////////// Twitter Area ////////////////////////
+  // twitterScraper();
+
+////////////////////// Facebook Area ///////////////////////
+  facebookScraper();
   
 })
 
