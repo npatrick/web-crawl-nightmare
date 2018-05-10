@@ -150,7 +150,8 @@ const instaScraper = async function(url) {
 
                 // find top level domain
                 topDomain.forEach(domain => {
-                  if (word.includes('@') && word.includes(domain)) {
+                	// using lowercase to normalize top domain used by users
+                  if (lowerWord.includes('@') && lowerWord.includes(domain)) {
                     let qIndex;
                     word.indexOf('?') === -1 ? qIndex = undefined : qIndex = word.indexOf('?');
                     let tempEmail = word.slice(0, qIndex);
