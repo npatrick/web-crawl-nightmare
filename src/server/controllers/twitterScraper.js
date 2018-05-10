@@ -85,8 +85,6 @@ const twitterScraper = async function (idToStart) {
 						return;
 					}
 					cheerioArr.forEach((userObj) => {
-						console.log('twitter for username:', userObj.username);
-						console.log('type of his/her cheerioObj ====>', typeof userObj.cheerioObj);
 						if (userObj.cheerioObj) {
 							let $twitter = userObj.cheerioObj;
 							let $twitterBioArr = $twitter.text().split(' ');
@@ -102,25 +100,32 @@ const twitterScraper = async function (idToStart) {
 					}) // end of forEach
 					// insert to DB after crawling twitter users
 					resultSoFarArr = objToArr(resultSoFar);
-					console.log('Result arr to be saved ==>\n', resultSoFarArr);
 					if (resultSoFarArr.length !== 0) {
-						let bulkUpdate = resultSoFarArr.map((obj) => {
-							return {
-								updateOne: {
-									filter: { username: obj.username },
-									update: {
-										'data.email': obj.data.email
+						let bulkUpdate = resultSoFarArr.reduce((acc, obj) => {
+							if (obj.data.email) {
+								acc.push({
+									updateOne: {
+										filter: { username: obj.username },
+										update: {
+											'data.email': obj.data.email
+										}
 									}
-								}
+								})
 							}
-						});
+							return acc;
+						}, []);
 						resultSoFar = {};
-						return InstaUser.bulkWrite(bulkUpdate);
+						console.log('Bulk updating to be done ==>\n', bulkUpdate);
+						return (bulkUpdate.length !== 0) ? InstaUser.bulkWrite(bulkUpdate) : 'Nothing to update';
 					}
 				})
 				.then((response) => {
 					let timeNow = new Date();
-					console.log('Updated all ! @ time:', timeNow.toISOString());
+					if (response == 'Nothing to update') {
+						console.log(response);
+					} else {
+						console.log('Updated all ! @ time:', timeNow.toISOString());
+					}
 					if (nextRound === null) {
 						console.log('nextRound is now null');
 						return;
