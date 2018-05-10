@@ -7,7 +7,8 @@ const { topDomain } = require('../../misc/resource.js');
 
 let lastId;
 let nextRound;
-
+// may need to add functionality where
+// each request is from a logged in account on FB
 const facebookScraper = async function(idToStart) {
 	let resultSoFar = {};
 	let resultSoFarArr = [];
