@@ -11,6 +11,7 @@ const db = require('../db/index');
 const userSiteScraper = require('./controllers/userSiteScraper');
 const twitterScraper = require('./controllers/twitterScraper');
 const facebookScraper = require('./controllers/facebookScraper');
+const youtubeScraper = require('./controllers/youtubeScraper');
 
 const app = express();
 
@@ -74,8 +75,10 @@ db.on('open', () => {
   // twitterScraper();
 
 ////////////////////// Facebook Area ///////////////////////
-  facebookScraper();
-  
+  // facebookScraper();
+
+////////////////////// YouTube Area //////////////////////
+  youtubeScraper();
 })
 
 module.exports = app;
