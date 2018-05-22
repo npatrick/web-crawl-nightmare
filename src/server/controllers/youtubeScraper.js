@@ -11,10 +11,11 @@ const youtubeVo = require('../helperFn/youtubeVo');
 let lastId;
 let nextRound;
 // need to take care of attached \n on emails **********
-const youtubeScraper = async function(idToStart) {
+const youtubeScraper = async function(idToStart, profileCheck) {
 	let resultSoFar = {};
 	let resultSoFarArr;
-
+	// conditional whether we need to call grabYoutubeUrl
+	// from DB or go straight to url visitation
 	async function grabYoutubeUrl(lastId) {
 		if (lastId) {
 			return await InstaUser
@@ -45,64 +46,68 @@ const youtubeScraper = async function(idToStart) {
 			.exec()
 	}
 
-	return await grabYoutubeUrl(idToStart)
-		.then((docs) => {
-			let youtubeList = [];
-			console.log('List of youtube urls:\n', docs);
+	if (profileCheck) {
+		return profileCheck;
+	} else {
+		return await grabYoutubeUrl(idToStart)
+			.then((docs) => {
+				let youtubeList = [];
+				console.log('List of youtube urls:\n', docs);
 
-			if (docs.length === 0) {
-				console.log('All got emails already, none were returned from DB');
-				return
-			} else {
-				if (docs.length < 10) {
-					console.log('We have less than 10 !');
-					nextRound = null;
-					console.log('nextRound will now be null:', nextRound === null);
+				if (docs.length === 0) {
+					console.log('All got emails already, none were returned from DB');
+					return
+				} else {
+					if (docs.length < 10) {
+						console.log('We have less than 10 !');
+						nextRound = null;
+						console.log('nextRound will now be null:', nextRound === null);
+					}
+					lastId = docs[docs.length - 1]['_id'];
+					console.log('Last ID:', lastId);
+					docs.forEach((item) => {
+						let rawUrl = item.data.website;
+						let youtubeUrl;
+						let aboutTemp;
+						if (rawUrl.includes('?')) {
+							youtubeUrl = rawUrl.slice(0, rawUrl.indexOf('?'));
+						} else {
+							youtubeUrl = rawUrl;
+						}
+						// organize the youtube url that will be used
+						// check for video
+						if (youtubeUrl.includes('youtu.be') || youtubeUrl.includes('/watch?')) {
+							youtubeList.push({ username: item.username, video: 'https://' + youtubeUrl });
+						// check for user profile
+						} else if (youtubeUrl.includes('/user/')) {
+							if (youtubeUrl[youtubeUrl.length - 1] === '/') {
+								aboutTemp = youtubeUrl + 'about';
+							} else {
+								aboutTemp = youtubeUrl + '/about';
+							}
+							youtubeList.push({ username: item.username, about: 'https://' + aboutTemp });
+						// check for channel profile
+						} else if (youtubeUrl.includes('/channel/')) {
+							if (youtubeUrl[youtubeUrl.length - 1] === '/') {
+								aboutTemp = youtubeUrl + 'about';
+							} else {
+								aboutTemp = youtubeUrl + '/about';
+							}
+							youtubeList.push({ username: item.username, about: 'https://' + aboutTemp });
+						// check for actual user url ==> youtube.com/username
+						} else {
+							if (youtubeUrl[youtubeUrl.length - 1] === '/') {
+								aboutTemp = youtubeUrl + 'about';
+							} else {
+								aboutTemp = youtubeUrl + '/about';
+							}
+							youtubeList.push({ username: item.username, about: 'https://' + aboutTemp });
+						}
+					})
 				}
-				lastId = docs[docs.length - 1]['_id'];
-				console.log('Last ID:', lastId);
-				docs.forEach((item) => {
-					let rawUrl = item.data.website;
-					let youtubeUrl;
-					let aboutTemp;
-					if (rawUrl.includes('?')) {
-						youtubeUrl = rawUrl.slice(0, rawUrl.indexOf('?'));
-					} else {
-						youtubeUrl = rawUrl;
-					}
-					// organize the youtube url that will be used
-					// check for video
-					if (youtubeUrl.includes('youtu.be') || youtubeUrl.includes('/watch?')) {
-						youtubeList.push({ username: item.username, video: 'https://' + youtubeUrl });
-					// check for user profile
-					} else if (youtubeUrl.includes('/user/')) {
-						if (youtubeUrl[youtubeUrl.length - 1] === '/') {
-							aboutTemp = youtubeUrl + 'about';
-						} else {
-							aboutTemp = youtubeUrl + '/about';
-						}
-						youtubeList.push({ username: item.username, about: 'https://' + aboutTemp });
-					// check for channel profile
-					} else if (youtubeUrl.includes('/channel/')) {
-						if (youtubeUrl[youtubeUrl.length - 1] === '/') {
-							aboutTemp = youtubeUrl + 'about';
-						} else {
-							aboutTemp = youtubeUrl + '/about';
-						}
-						youtubeList.push({ username: item.username, about: 'https://' + aboutTemp });
-					// check for actual user url ==> youtube.com/username
-					} else {
-						if (youtubeUrl[youtubeUrl.length - 1] === '/') {
-							aboutTemp = youtubeUrl + 'about';
-						} else {
-							aboutTemp = youtubeUrl + '/about';
-						}
-						youtubeList.push({ username: item.username, about: 'https://' + aboutTemp });
-					}
-				})
-			}
-			return youtubeList;
-		})
+				return youtubeList;
+			})
+	}
 		.then((youtubeList) => {
 			console.log('Now running simpleRun on youtubeList:...\n', youtubeList);
 			let youtubeListToVisit = youtubeList.map((item) => {
@@ -190,6 +195,8 @@ const youtubeScraper = async function(idToStart) {
 			}
 			return profCheck;
 		})
+// ======> editing comes here
+// needs to be DRY
 		// expecting an array of str and/or obj to check again to go to user/channel profile
 		.then((arr) => {
 			let timeNow = new Date();
