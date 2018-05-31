@@ -1,8 +1,3 @@
-const rp = require('request-promise');
-const cheerio = require('cheerio');
-const Nightmare = require('nightmare');
-const User = require('../../db/userSchema');
-const vo = require('vo');
 const instaScraper = require('./instaScraper');
 
 let reqPromCrawl = async function (url) {
