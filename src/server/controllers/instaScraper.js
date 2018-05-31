@@ -117,12 +117,20 @@ const instaScraper = async function(url) {
         .then(cheerioArr => {
           let userWebList = [];
           cheerioArr.forEach(($insta) => {
+            // TODO: Need to update these fields...
             let imageProf = $insta('._rewi8').attr('src');
             let username = $insta('._rf3jb.notranslate').attr('title');
             let followers = $insta('._fd86t').eq(1).attr('title');
             let fullName = $insta('._kc4z2').text();
             let bio = $insta('._tb97a > span').text();
             let website = $insta('._tb97a > a').text();
+
+            console.log('what i got:', `\n
+              username: ${username},\n
+              imageProf: ${imageProf},\n
+              bio: ${bio},\n
+              website: ${website}
+              `);
 
             if (!resultSoFar.hasOwnProperty(username)) {
               console.log('NEW USER:', username);
