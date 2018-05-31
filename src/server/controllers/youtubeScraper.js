@@ -107,186 +107,186 @@ const youtubeScraper = async function(idToStart, profileCheck) {
 				}
 				return youtubeList;
 			})
-	}
-		.then((youtubeList) => {
-			console.log('Now running simpleRun on youtubeList:...\n', youtubeList);
-			let youtubeListToVisit = youtubeList.map((item) => {
-				if (item.video) {
-					return simpleRun({ uri: item.video }, item);
+			.then((youtubeList) => {
+				console.log('Now running simpleRun on youtubeList:...\n', youtubeList);
+				let youtubeListToVisit = youtubeList.map((item) => {
+					if (item.video) {
+						return simpleRun({ uri: item.video }, item);
+					} else {
+						return simpleRun({ uri: item.about }, item);
+					}
+				});
+
+				return youtubeVo(youtubeListToVisit);
+			})
+			.then((resArr) => {
+				let profCheck = [];
+
+				resArr.forEach((resObj, index) => {
+					let username = resObj.username;
+					resultSoFar[username] = {};  // i have username access
+					let $ = resObj.$cheerioObj;
+					// desccription from a video
+					let description = $('#eow-description').text();
+					// description from a profile about section
+					let userDescription = $('.about-description').text().trim().replace(' ', '');
+					let userChannel = $('#watch7-user-header > a').attr('href');
+
+					// disect description for email from either
+					// video description or from the /about section
+					if (description || userDescription) {
+						console.log('NOW DISECTING DESCRIPTION FROM VIDEO OR PROF !! !! !!...');
+						let descArr = (description) ? description.split(' ') : userDescription.split(' ');
+						descArr.forEach((word) => {
+							let lowerWord = word.toLowerCase();
+							topDomain.forEach((domain) => {
+								if (lowerWord.includes('@') && lowerWord.includes(domain)) {
+									let qIndex;
+	                word.indexOf('?') === -1 ? qIndex = undefined : qIndex = word.indexOf('?');
+	                let tempEmail = word.slice(0, qIndex);
+	              	resultSoFar[username].email = tempEmail;
+								}
+							})
+						})
+					}
+				 	// else if (#details-container)
+					// grab the selector for button "View Email Address" & click behavior
+					// do nightmare to do captcha & wait for response from 3rd party
+					// api such as 2captcha or deathbycaptcha
+					// click submit
+					// wait('#email-container > a').attr('href')
+					// remove mailto
+
+
+					// check that we dont have email on specific user
+					// => check from /channel or /user
+					if (!resultSoFar[username].email && (resObj.uri.includes('/channel/') || resObj.uri.includes('/user/'))) {
+						// wont be adding to profCheck
+						console.log('Came from /user OR /channel... still no email retrieved for user:', username);
+					// => check on video
+					} else if (!resultSoFar[username].email && (resObj.uri.includes('youtu.be') || resObj.uri.includes('/watch?'))) {
+						console.log('Came from VIDEO.. adding to profCheck for user:', username);
+						profCheck.push({ username: username, about: `https://youtube.com${userChannel}/about` });
+					// => check on actual user url such as ==> youtube.com/clothesencounters
+					} else if (!resultSoFar[username].email && resObj.uri.includes('youtube.com/')) {
+						console.log('Came from ACTUAL user url... still no email retrieved for user', username);
+					}
+				}); // end of forEach
+				console.log('Prepping arr with:\n', resultSoFar);
+				resultSoFarArr = objToArr(resultSoFar);
+				if (resultSoFarArr.length !== 0) {
+					let bulkUpdate = resultSoFarArr.reduce((acc, obj) => {
+						if (obj.data.email) {
+							acc.push({
+								updateOne: {
+									filter: { username: obj.username },
+									update: {
+										'data.email': obj.data.email
+									}
+								}
+							});
+						}
+						return acc;
+					}, []);
+					resultSoFar = {};
+					console.log('Bulk updating to be done ==>\n', bulkUpdate);
+					(bulkUpdate.length !== 0) ? InstaUser.bulkWrite(bulkUpdate) : 'Nothing to update';
+				}
+				return profCheck;
+				})
+	// ======> editing comes here
+	// needs to be DRY
+			// expecting an array of str and/or obj to check again to go to user/channel profile
+			.then((arr) => {
+				let timeNow = new Date();
+				if (arr.length === 0 && nextRound === null) {
+					console.log('Nothing to follow up from current segment & nextRound is null:', timeNow.toISOString());
+					return;
+				}
+				// to visit arr
+				console.log('What did I actually get from profCheck?', arr);
+				let arrToVisit = arr.map((item) => simpleRun({ uri: item.about }, item));
+				return youtubeVo(arrToVisit);
+			})
+			.then((resArr) => {
+				resArr.forEach((resObj, index) => {
+					let username = resObj.username;
+					resultSoFar[username] = {};  // i have username access
+					let $ = resObj.$cheerioObj;
+					// desccription from a video
+					let description = $('#eow-description').text();
+					// description from a profile about section
+					let userDescription = $('.about-description').text().trim().replace(' ', '');
+					let userChannel = $('#watch7-user-header > a').attr('href');
+
+					// disect description for email from either
+					// video description or from the /about section
+					if (description || userDescription) {
+						console.log('NOW DISECTING DESCRIPTION FROM VIDEO OR PROF !! !! !!...');
+						let descArr = (description) ? description.split(' ') : userDescription.split(' ');
+						descArr.forEach((word) => {
+							let lowerWord = word.toLowerCase();
+							topDomain.forEach((domain) => {
+								if (lowerWord.includes('@') && lowerWord.includes(domain)) {
+									let qIndex;
+	                word.indexOf('?') === -1 ? qIndex = undefined : qIndex = word.indexOf('?');
+	                let tempEmail = word.slice(0, qIndex);
+	              	resultSoFar[username].email = tempEmail;
+								}
+							})
+						})
+					}
+				 	// else if (#details-container)
+					// grab the selector for button "View Email Address" & click behavior
+					// do nightmare to do captcha & wait for response from 3rd party
+					// api such as 2captcha or deathbycaptcha
+					// click submit
+					// wait('#email-container > a').attr('href')
+					// remove mailto
+
+
+					// check that we dont have email on specific user
+					// => check from /channel or /user
+					if (!resultSoFar[username].email && (resObj.uri.includes('/channel/') || resObj.uri.includes('/user/'))) {
+						// wont be adding to profCheck
+						console.log('Came from /user OR /channel... still no email retrieved for user:', username);
+					// => check on actual user url such as ==> youtube.com/clothesencounters
+					} else if (!resultSoFar[username].email && resObj.uri.includes('youtube.com/')) {
+						console.log('Came from ACTUAL user url... still no email retrieved for user', username);
+					}
+				}); // end of forEach
+				console.log('Prepping arr with:\n', resultSoFar);
+				resultSoFarArr = objToArr(resultSoFar);
+				if (resultSoFarArr.length !== 0) {
+					let bulkUpdate = resultSoFarArr.reduce((acc, obj) => {
+						if (obj.data.email) {
+							acc.push({
+								updateOne: {
+									filter: { username: obj.username },
+									update: {
+										'data.email': obj.data.email
+									}
+								}
+							});
+						}
+						return acc;
+					}, []);
+					resultSoFar = {};
+					console.log('Bulk updating to be done ==>\n', bulkUpdate);
+					(bulkUpdate.length !== 0) ? InstaUser.bulkWrite(bulkUpdate) : 'Nothing to update';
+				}
+				if (nextRound === null) {
+					console.log('nextRound is now null');
+					return 'We Are Done !';
 				} else {
-					return simpleRun({ uri: item.about }, item);
+					console.log('Next round in the db retrieval with lastId...', lastId);
+					youtubeScraper(lastId);
 				}
-			});
-
-			return youtubeVo(youtubeListToVisit);
-		})
-		.then((resArr) => {
-			let profCheck = [];
-
-			resArr.forEach((resObj, index) => {
-				let username = resObj.username;
-				resultSoFar[username] = {};  // i have username access
-				let $ = resObj.$cheerioObj;
-				// desccription from a video
-				let description = $('#eow-description').text();
-				// description from a profile about section
-				let userDescription = $('.about-description').text().trim().replace(' ', '');
-				let userChannel = $('#watch7-user-header > a').attr('href');
-
-				// disect description for email from either
-				// video description or from the /about section
-				if (description || userDescription) {
-					console.log('NOW DISECTING DESCRIPTION FROM VIDEO OR PROF !! !! !!...');
-					let descArr = (description) ? description.split(' ') : userDescription.split(' ');
-					descArr.forEach((word) => {
-						let lowerWord = word.toLowerCase();
-						topDomain.forEach((domain) => {
-							if (lowerWord.includes('@') && lowerWord.includes(domain)) {
-								let qIndex;
-                word.indexOf('?') === -1 ? qIndex = undefined : qIndex = word.indexOf('?');
-                let tempEmail = word.slice(0, qIndex);
-              	resultSoFar[username].email = tempEmail;
-							}
-						})
-					})
-				}
-			 	// else if (#details-container)
-				// grab the selector for button "View Email Address" & click behavior
-				// do nightmare to do captcha & wait for response from 3rd party
-				// api such as 2captcha or deathbycaptcha
-				// click submit
-				// wait('#email-container > a').attr('href')
-				// remove mailto
-
-
-				// check that we dont have email on specific user
-				// => check from /channel or /user
-				if (!resultSoFar[username].email && (resObj.uri.includes('/channel/') || resObj.uri.includes('/user/'))) {
-					// wont be adding to profCheck
-					console.log('Came from /user OR /channel... still no email retrieved for user:', username);
-				// => check on video
-				} else if (!resultSoFar[username].email && (resObj.uri.includes('youtu.be') || resObj.uri.includes('/watch?'))) {
-					console.log('Came from VIDEO.. adding to profCheck for user:', username);
-					profCheck.push({ username: username, about: `https://youtube.com${userChannel}/about` });
-				// => check on actual user url such as ==> youtube.com/clothesencounters
-				} else if (!resultSoFar[username].email && resObj.uri.includes('youtube.com/')) {
-					console.log('Came from ACTUAL user url... still no email retrieved for user', username);
-				}
-			}); // end of forEach
-			console.log('Prepping arr with:\n', resultSoFar);
-			resultSoFarArr = objToArr(resultSoFar);
-			if (resultSoFarArr.length !== 0) {
-				let bulkUpdate = resultSoFarArr.reduce((acc, obj) => {
-					if (obj.data.email) {
-						acc.push({
-							updateOne: {
-								filter: { username: obj.username },
-								update: {
-									'data.email': obj.data.email
-								}
-							}
-						});
-					}
-					return acc;
-				}, []);
-				resultSoFar = {};
-				console.log('Bulk updating to be done ==>\n', bulkUpdate);
-				(bulkUpdate.length !== 0) ? InstaUser.bulkWrite(bulkUpdate) : 'Nothing to update';
-			}
-			return profCheck;
-		})
-// ======> editing comes here
-// needs to be DRY
-		// expecting an array of str and/or obj to check again to go to user/channel profile
-		.then((arr) => {
-			let timeNow = new Date();
-			if (arr.length === 0 && nextRound === null) {
-				console.log('Nothing to follow up from current segment & nextRound is null:', timeNow.toISOString());
-				return;
-			}
-			// to visit arr
-			console.log('What did I actually get from profCheck?', arr);
-			let arrToVisit = arr.map((item) => simpleRun({ uri: item.about }, item));
-			return youtubeVo(arrToVisit);
-		})
-		.then((resArr) => {
-			resArr.forEach((resObj, index) => {
-				let username = resObj.username;
-				resultSoFar[username] = {};  // i have username access
-				let $ = resObj.$cheerioObj;
-				// desccription from a video
-				let description = $('#eow-description').text();
-				// description from a profile about section
-				let userDescription = $('.about-description').text().trim().replace(' ', '');
-				let userChannel = $('#watch7-user-header > a').attr('href');
-
-				// disect description for email from either
-				// video description or from the /about section
-				if (description || userDescription) {
-					console.log('NOW DISECTING DESCRIPTION FROM VIDEO OR PROF !! !! !!...');
-					let descArr = (description) ? description.split(' ') : userDescription.split(' ');
-					descArr.forEach((word) => {
-						let lowerWord = word.toLowerCase();
-						topDomain.forEach((domain) => {
-							if (lowerWord.includes('@') && lowerWord.includes(domain)) {
-								let qIndex;
-                word.indexOf('?') === -1 ? qIndex = undefined : qIndex = word.indexOf('?');
-                let tempEmail = word.slice(0, qIndex);
-              	resultSoFar[username].email = tempEmail;
-							}
-						})
-					})
-				}
-			 	// else if (#details-container)
-				// grab the selector for button "View Email Address" & click behavior
-				// do nightmare to do captcha & wait for response from 3rd party
-				// api such as 2captcha or deathbycaptcha
-				// click submit
-				// wait('#email-container > a').attr('href')
-				// remove mailto
-
-
-				// check that we dont have email on specific user
-				// => check from /channel or /user
-				if (!resultSoFar[username].email && (resObj.uri.includes('/channel/') || resObj.uri.includes('/user/'))) {
-					// wont be adding to profCheck
-					console.log('Came from /user OR /channel... still no email retrieved for user:', username);
-				// => check on actual user url such as ==> youtube.com/clothesencounters
-				} else if (!resultSoFar[username].email && resObj.uri.includes('youtube.com/')) {
-					console.log('Came from ACTUAL user url... still no email retrieved for user', username);
-				}
-			}); // end of forEach
-			console.log('Prepping arr with:\n', resultSoFar);
-			resultSoFarArr = objToArr(resultSoFar);
-			if (resultSoFarArr.length !== 0) {
-				let bulkUpdate = resultSoFarArr.reduce((acc, obj) => {
-					if (obj.data.email) {
-						acc.push({
-							updateOne: {
-								filter: { username: obj.username },
-								update: {
-									'data.email': obj.data.email
-								}
-							}
-						});
-					}
-					return acc;
-				}, []);
-				resultSoFar = {};
-				console.log('Bulk updating to be done ==>\n', bulkUpdate);
-				(bulkUpdate.length !== 0) ? InstaUser.bulkWrite(bulkUpdate) : 'Nothing to update';
-			}
-			if (nextRound === null) {
-				console.log('nextRound is now null');
-				return 'We Are Done !';
-			} else {
-				console.log('Next round in the db retrieval with lastId...', lastId);
-				youtubeScraper(lastId);
-			}
-		})
-		.catch((err) => {
-			console.log('Got an error chained at the end:\n', err);
-		})
+			})
+			.catch((err) => {
+				console.log('Got an error chained at the end:\n', err);
+			})
+	}
 };
 
 module.exports = youtubeScraper;
