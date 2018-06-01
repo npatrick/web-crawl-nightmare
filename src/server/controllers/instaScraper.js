@@ -117,13 +117,20 @@ const instaScraper = async function(url) {
         .then(cheerioArr => {
           let userWebList = [];
           cheerioArr.forEach(($insta) => {
-            // TODO: Need to update these fields...
-            let imageProf = $insta('._rewi8').attr('src');
-            let username = $insta('._rf3jb.notranslate').attr('title');
-            let followers = $insta('._fd86t').eq(1).attr('title');
-            let fullName = $insta('._kc4z2').text();
-            let bio = $insta('._tb97a > span').text();
-            let website = $insta('._tb97a > a').text();
+            // TODO: Need to update these fields when insta updates their selectors...
+            // imageProf = $insta('._rewi8').attr('src');
+            // username = $insta('._rf3jb.notranslate').attr('title');
+            // followers = $insta('._fd86t').eq(1).attr('title');
+            // fullName = $insta('._kc4z2').text();
+            // bio = $insta('._tb97a > span').text();
+            // website = $insta('._tb97a > a').text();
+
+            let imageProf = $insta('._6q-tv').attr('src');
+            let username = $insta('.AC5d8').attr('title');
+            let followers = $insta('.-nal3 ').eq(1).find('span').attr('title');
+            let fullName = $insta('.rhpdm').text();
+            let bio = $insta('.-vDIg > span').text();
+            let website = $insta('.-vDIg > a').text();
 
             console.log('what i got:', `\n
               username: ${username},\n
