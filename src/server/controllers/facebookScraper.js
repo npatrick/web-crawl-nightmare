@@ -61,11 +61,16 @@ const facebookScraper = async function(idToStart) {
 				docs.forEach((item) => {
 					let rawUrl = item.data.facebook;
 					let fbUrl;
+					let rawFbUrl;
 					if (rawUrl.includes('?')) {
-						fbUrl =  rawUrl.slice(0, rawUrl.indexOf('?'));
+						rawFbUrl =  rawUrl.slice(0, rawUrl.indexOf('?'));
 					} else {
-						fbUrl = rawUrl;
+						rawFbUrl = rawUrl;
 					}
+
+					// normalize by removing possible spaces on fb url
+					fbUrl = rawFbUrl.split(' ').join('');
+
 					// avoid /sharer /groups 
 					if (fbUrl.includes('facebook.com') && !fbUrl.includes('/sharer') && !fbUrl.includes('/groups')) {
 						// use about section of fb
@@ -101,6 +106,8 @@ const facebookScraper = async function(idToStart) {
 						resultSoFar[userObj.username] = {};
 						if (userObj.cheerioObj) {
 							let $ = userObj.cheerioObj;
+							let userSelectorCheck = $('._2iem').text();
+							console.log('FB User Selector Check:', userSelectorCheck);
 							let tempEmail = $('._50f4').filter(function(i, elem) {
 								let $parent = $(elem).parent().attr('href');
 								if ($parent) {
