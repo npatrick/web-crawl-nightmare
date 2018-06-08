@@ -1,5 +1,24 @@
 const Nightmare = require('nightmare');
 const cheerio = require('cheerio');
+const { proxyArr } = require('../../misc/proxyList') // load proxy list
+
+Nightmare.action('proxy',
+  function(name, options, parent, win, renderer, done) {
+      parent.respondTo('proxy', function(host, done) {
+          win.webContents.session.setProxy({
+              proxyRules: 'http=' + host + ';https='+ host +';ftp=' + host,
+
+          }, function() {
+              done();
+          });
+      });
+
+      done();
+  },
+  function(host, done) {
+      this.child.call('proxy', host, done);
+  }
+);
 
 const nightmare = Nightmare({
   show: true,
@@ -32,8 +51,7 @@ const nightmare = Nightmare({
  *                              be interacted w/ .html(),
  *                              .find(), .text(), etc.
  */
-const beginNightmare = (domain, selectorStr, isUserWeb) => {
-    let waitTimer = isUserWeb ? 1 : 2000;
+const beginNightmare = (domain, selectorStr, isUserWeb, proxyIndex) => {
   	let normalizeDomain = '';
     let siteBlacklisted = false;
     const blackList = ['vogue.com', 'vogue', 'consumingla.com', 'okayafrica.com', 
@@ -50,39 +68,76 @@ const beginNightmare = (domain, selectorStr, isUserWeb) => {
     	} else {
     		normalizeDomain = domain;
     	}
-      console.log('now checking in ', normalizeDomain);
-  		return nightmare
-        .goto(normalizeDomain)
-        .wait(waitTimer)
-      	.wait(selectorStr)
-        .evaluate((selector) => {
-          return document.querySelector(selector).outerHTML;
-        }, selectorStr)
-        .then((el) => {
-          let $ = cheerio.load(el);
 
-          $.prototype.exists = function (selector) {
-            return this.find(selector).length > 0;
-          }
-          return $;
-        })
-        .catch(error => {
-          console.log('Do I have error.details below ====>\n', error.details);
-          console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
-          if (error.details == 'Navigation timed out after 30000 ms') {
-            console.log('I got error details, seeeeee =>', error.details);
+      if (proxyIndex !== false) {
+        console.log('GOT PROXY TO USE!', proxyArr[proxyIndex]);
+        return nightmare
+          .proxy(proxyArr[proxyIndex])
+          .authentication(process.env.PROXYUSER, process.env.PROXYPASS)
+          .goto(normalizeDomain)
+          .wait(selectorStr)
+          .evaluate((selector) => {
+            return document.querySelector(selector).outerHTML;
+          }, selectorStr)
+          .then((el) => {
+            let $ = cheerio.load(el);
+
+            $.prototype.exists = function (selector) {
+              return this.find(selector).length > 0;
+            }
+            return $;
+          })
+          .catch(error => {
+            console.log('Do I have error.details below ====>\n', error.details);
+            console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
+            if (error.details == 'Navigation timed out after 30000 ms') {
+              console.log('I got error details, seeeeee =>', error.details);
+              return undefined;
+            }
+            if (error.details == 'ERR_NAME_NOT_RESOLVED') {
+              console.log('Probably did not get the html at all');
+              return undefined;
+            }
+            if (error.details == 'ERR_INTERNET_DISCONNECTED') {
+              let time = new Date();
+              console.log('Time internet disconnected', time.toISOString());
+            }
             return undefined;
-          }
-          if (error.details == 'ERR_NAME_NOT_RESOLVED') {
-            console.log('Probably did not get the html at all');
+          })
+      } else {
+        console.log('now checking in ', normalizeDomain);
+    		return nightmare
+          .goto(normalizeDomain)
+        	.wait(selectorStr)
+          .evaluate((selector) => {
+            return document.querySelector(selector).outerHTML;
+          }, selectorStr)
+          .then((el) => {
+            let $ = cheerio.load(el);
+
+            $.prototype.exists = function (selector) {
+              return this.find(selector).length > 0;
+            }
+            return $;
+          })
+          .catch(error => {
+            console.log('Do I have error.details below ====>\n', error.details);
+            console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
+            if (error.details == 'Navigation timed out after 30000 ms') {
+              console.log('I got error details, seeeeee =>', error.details);
+              return undefined;
+            }
+            if (error.details == 'ERR_NAME_NOT_RESOLVED') {
+              console.log('Probably did not get the html at all');
+              return undefined;
+            }
+            if (error.details == 'ERR_INTERNET_DISCONNECTED') {
+              let time = new Date();
+              console.log('Time internet disconnected', time.toISOString());
+            }
             return undefined;
-          }
-          if (error.details == 'ERR_INTERNET_DISCONNECTED') {
-            let time = new Date();
-            console.log('Time internet disconnected', time.toISOString());
-          }
-          return undefined;
-        })  
+          })
+      }
     }
     console.log('BLACKLISTED:', domain);
     return nightmare;

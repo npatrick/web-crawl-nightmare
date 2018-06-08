@@ -29,11 +29,6 @@ let resultSoFarArr;
 
 const instaScraper = async function(url) {
 
-	// let options = {
- //    uri: url,
- //    transform: (body) => cheerio.load(body)
- //  };
-
   let resultObj = {};
 
 	await crawlerPromise({ uri: url })
@@ -108,12 +103,15 @@ const instaScraper = async function(url) {
       console.error('Something went wrong on mongo query... \n', err);
       return;
     })
+    // /////////////////////////////////////////////// //
+    // 2nd main part => visit insta profiles to scrape //
+    // /////////////////////////////////////////////// //
     .then((instaToVisit) => {
       if (!instaToVisit || instaToVisit.length === 0) {
-        console.log('All Dups... no need to visit insta');
+        console.log('All Dups... no need to visit insta for current batch');
         return;
       }
-      return vo(run(instaToVisit, '#react-root', false))
+      return vo(run(instaToVisit, '#react-root', false, true))
         .then(cheerioArr => {
           let userWebList = [];
           cheerioArr.forEach(($insta) => {

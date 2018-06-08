@@ -15,7 +15,7 @@ const beginNightmare = require('./beginNightmare');
  *                   of objects will be returned:
  *                   {username: 'username', cheerioObj: fn}
  */
-const run = function * (destination, qSelect, isUserWeb) {
+const run = function * (destination, qSelect, isUserWeb, useProxy) {
   let normalizeParam;
   let cheerioArr = [];
 
@@ -24,13 +24,23 @@ const run = function * (destination, qSelect, isUserWeb) {
   } else {
     normalizeParam = destination;
   }
+  let proxyIndex = 0;
   for (let i = 0; i < normalizeParam.length; i++ ) {
+    if (useProxy) {
+      if (i >= 56) {
+        proxyIndex = i - 56;
+      } else {
+        proxyIndex = i;
+      }
+    } else {
+      proxyIndex = false;
+    }
     let $cheerioObj;
     if (normalizeParam[i] !== null && typeof normalizeParam[i] === 'object') {
-      $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect, isUserWeb);
+      $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect, isUserWeb, proxyIndex);
       cheerioArr.push({ username: normalizeParam[i].username, cheerioObj: $cheerioObj });
     } else {
-      $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect, isUserWeb);
+      $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect, isUserWeb, proxyIndex);
       cheerioArr.push($cheerioObj);
     }
   } // end of for loop
