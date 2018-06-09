@@ -13,7 +13,7 @@ function crawlerPromise(options) {
 	return new Promise((resolve, reject) => {
 		options.callback = (err, res, done) => {
 			if (err) {
-				reject(err)
+				reject(err);
 			} else {
 				let $ = res.$;
 				resolve($);
@@ -84,6 +84,7 @@ const instaScraper = async function(url) {
       return resultObj ? InstaUser.find({ username: { $in: resultObj.dbUserCheck } }).exec() : [];
     })
     .then((doc) => {
+      // need to skip undefined values that end up getting visited
       let tempInstaToVisit;
       if (doc.length !== 0) {
         console.log('****************** Detected Existing Users in DB ******************');
@@ -148,7 +149,8 @@ const instaScraper = async function(url) {
                 bio: bio,
                 category: []
               };
-              let bioArr = bio.replace(/([\uE000-\uF8FF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF])/g, '').split(' ');
+              // remove emojis and split by spaces and comma
+              let bioArr = bio.replace(/([\uE000-\uF8FF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF])/g, '').split(/[, ]+/g);
               let skip = {};
               // extract any kind of emails/contact & category
               bioArr.forEach((word) => {
