@@ -95,15 +95,21 @@ const instaScraper = async function(url) {
           if (item === undefined || item === 'undefined') {
             return false;
           } else {
-            return `instagram.com/${item}`;
+            return true;
           }
-        });
+        }).map(item => `instagram.com/${item}`);
       } else {
         // all are new
         console.log('ALL ARE NEW!', doc);
-        tempInstaToVisit = resultObj.tempInsta;
+        tempInstaToVisit = resultObj.tempInsta.filter(item => {
+          if (item === undefined || item === 'undefined') {
+            return false;
+          } else {
+            return true;
+          }
+        }).map(item => `instagram.com/${item}`);
       }
-      console.log('!!!! FILTER RESULT !!!!! :\n', tempInstaToVisit)
+      console.log('!!!! FILTER Insta URL RESULT !!!!! :\n', tempInstaToVisit)
       return tempInstaToVisit;
     }, (err) => {
       console.error('Something went wrong on mongo query... \n', err);
