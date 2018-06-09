@@ -84,7 +84,6 @@ const instaScraper = async function(url) {
       return resultObj ? InstaUser.find({ username: { $in: resultObj.dbUserCheck } }).exec() : [];
     })
     .then((doc) => {
-      // need to skip undefined values that end up getting visited
       let tempInstaToVisit;
       if (doc.length !== 0) {
         console.log('****************** Detected Existing Users in DB ******************');
@@ -92,7 +91,13 @@ const instaScraper = async function(url) {
         console.log('now filtering...');
         // filter out existing db users to visit
         tempInstaToVisit = resultObj.dbUserCheck.filter(gram => !linkArr.includes(gram));
-      	tempInstaToVisit = tempInstaToVisit.map(item => `instagram.com/${item}`);
+      	tempInstaToVisit = tempInstaToVisit.filter(item => {
+          if (item === undefined || item === 'undefined') {
+            return false;
+          } else {
+            return `instagram.com/${item}`;
+          }
+        });
       } else {
         // all are new
         console.log('ALL ARE NEW!', doc);
