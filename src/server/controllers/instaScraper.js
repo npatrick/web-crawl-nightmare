@@ -134,20 +134,24 @@ const instaScraper = async function(url) {
             // fullName = $insta('._kc4z2').text();
             // bio = $insta('._tb97a > span').text();
             // website = $insta('._tb97a > a').text();
-
+            if (typeof $insta !== 'function') {
+              console.log('$insta param not a function');
+              return;
+            }
             let imageProf = $insta('._6q-tv').attr('src');
             let username = $insta('.AC5d8').attr('title');
             let followers = $insta('.-nal3 ').eq(1).find('span').attr('title');
             let fullName = $insta('.rhpdm').text();
             let bio = $insta('.-vDIg > span').text();
             let website = $insta('.-vDIg > a').text();
-
-            console.log('what i got:', `\n
-              username: ${username},\n
-              imageProf: ${imageProf},\n
-              bio: ${bio},\n
-              website: ${website}
-              `);
+            // use this log to check the validity of the selectors above
+            // console.log('what i got:', `\n
+            //   username: ${username},\n
+            //   imageProf: ${imageProf},\n
+            //   followers: ${followers},\n
+            //   bio: ${bio},\n
+            //   website: ${website}
+            //   `);
 
             if (!resultSoFar.hasOwnProperty(username)) {
               console.log('NEW USER:', username);
@@ -160,8 +164,10 @@ const instaScraper = async function(url) {
                 bio: bio,
                 category: []
               };
-              // remove emojis and split by spaces and comma
-              let bioArr = bio.replace(/([\uE000-\uF8FF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF])/g, '').split(/[, ]+/g);
+              // remove emojis, bulletpoints and split by spaces and comma
+              // check mongo shell for emails with non standard ASCII => [[:^print:]]
+              // 
+              let bioArr = bio.replace(/([\uE000-\uF8FF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF]|\u2022)/g, '').split(/[, ]+/g);
               let skip = {};
               // extract any kind of emails/contact & category
               bioArr.forEach((word) => {
@@ -182,7 +188,7 @@ const instaScraper = async function(url) {
                     word.indexOf('?') === -1 ? qIndex = undefined : qIndex = word.indexOf('?');
                     let tempEmail = word.slice(0, qIndex);
                     let normEmail;
-                    (tempEmail.includes(':')) ? normEmail = tempEmail.slice(tempEmail.indexOf(':') + 1) : normEmail = tempEmail;
+                    (tempEmail.includes(':')) ? normEmail = tempEmail.slice(tempEmail.indexOf(':') + 1).replace(/[^\x00-\xFF]/g, '') : normEmail = tempEmail.replace(/[^\x00-\xFF]/g, '');
 
                     resultSoFar[username].email = normEmail;
                   }
@@ -201,6 +207,7 @@ const instaScraper = async function(url) {
           return InstaUser.insertMany(resultSoFarArr, { ordered: false });
         })
         .then((response) => {
+          console.log('You see... I saved valid items.');
           if (response.acknowledged === true) {
             console.log('ALL inserts have been added to DB');
           }
