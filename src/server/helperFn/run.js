@@ -24,23 +24,14 @@ const run = function * (destination, qSelect, isUserWeb, useProxy) {
   } else {
     normalizeParam = destination;
   }
-  let proxyIndex = 0;
+
   for (let i = 0; i < normalizeParam.length; i++ ) {
-    if (useProxy) {
-      if (i >= 56) {
-        proxyIndex = i - 56;
-      } else {
-        proxyIndex = i;
-      }
-    } else {
-      proxyIndex = false;
-    }
     let $cheerioObj;
     if (normalizeParam[i] !== null && typeof normalizeParam[i] === 'object') {
-      $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect, isUserWeb, proxyIndex);
+      $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect, isUserWeb, useProxy);
       cheerioArr.push({ username: normalizeParam[i].username, cheerioObj: $cheerioObj });
     } else {
-      $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect, isUserWeb, proxyIndex);
+      $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect, isUserWeb, useProxy);
       cheerioArr.push($cheerioObj);
     }
   } // end of for loop

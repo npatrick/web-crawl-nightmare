@@ -1,6 +1,6 @@
 const Nightmare = require('nightmare');
+const rp = require('request-promise');
 const cheerio = require('cheerio');
-const { proxyArr } = require('../../misc/proxyList') // load proxy list
 
 Nightmare.action('proxy',
   function(name, options, parent, win, renderer, done) {
@@ -51,10 +51,10 @@ const nightmare = Nightmare({
  *                              be interacted w/ .html(),
  *                              .find(), .text(), etc.
  */
-const beginNightmare = (domain, selectorStr, isUserWeb, proxyIndex) => {
+const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
   	let normalizeDomain = '';
     let siteBlacklisted = false;
-    const blackList = ['vogue.com', 'vogue', 'consumingla.com', 'okayafrica.com', 
+    const blackList = ['instagram.com/blog', 'vogue.com', 'vogue', 'consumingla.com', 'okayafrica.com', 
                       'amodelsguide.com', 'theclothing-twpm.com', 'amazon.com',
                       'dodgers.com'];
     blackList.forEach((url) => {
@@ -68,41 +68,52 @@ const beginNightmare = (domain, selectorStr, isUserWeb, proxyIndex) => {
     	} else {
     		normalizeDomain = domain;
     	}
+      let domainPartsArr = normalizeDomain.split('/');
+      if (domainPartsArr[3].length < 1) {
+        console.log('wrong insta user path');
+        return nightmare;
+      }
 
-      if (proxyIndex !== false) {
-        console.log('GOT PROXY TO USE!', proxyArr[proxyIndex]);
-        return nightmare
-          .proxy(proxyArr[proxyIndex])
-          .authentication(process.env.PROXYUSER, process.env.PROXYPASS)
-          .goto(normalizeDomain)
-          .wait(selectorStr)
-          .evaluate((selector) => {
-            return document.querySelector(selector).outerHTML;
-          }, selectorStr)
-          .then((el) => {
-            let $ = cheerio.load(el);
+      if (useProxy !== false) {
+        return await rp('http://localhost:8080/fetch-proxy') // rotating self-made proxy
+          .then((currentProxy) => {
+            console.log('fetch-proxy response:', currentProxy);
+            return nightmare
+              .proxy(currentProxy)
+              .authentication(process.env.PROXYUSER, process.env.PROXYPASS)
+              .goto(normalizeDomain)
+              .wait(selectorStr)
+              .evaluate((selector) => {
+                return document.querySelector(selector).outerHTML;
+              }, selectorStr)
+              .then((el) => {
+                let $ = cheerio.load(el);
 
-            $.prototype.exists = function (selector) {
-              return this.find(selector).length > 0;
-            }
-            return $;
+                $.prototype.exists = function (selector) {
+                  return this.find(selector).length > 0;
+                }
+                return $;
+              })
+              .catch(error => {
+                console.log('Do I have error.details below ====>\n', error.details);
+                console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
+                if (error.details == 'Navigation timed out after 30000 ms') {
+                  console.log('I got error details, seeeeee =>', error.details);
+                  return undefined;
+                }
+                if (error.details == 'ERR_NAME_NOT_RESOLVED') {
+                  console.log('Probably did not get the html at all');
+                  return undefined;
+                }
+                if (error.details == 'ERR_INTERNET_DISCONNECTED') {
+                  let time = new Date();
+                  console.log('Time internet disconnected', time.toISOString());
+                }
+                return undefined;
+              })
           })
-          .catch(error => {
-            console.log('Do I have error.details below ====>\n', error.details);
-            console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
-            if (error.details == 'Navigation timed out after 30000 ms') {
-              console.log('I got error details, seeeeee =>', error.details);
-              return undefined;
-            }
-            if (error.details == 'ERR_NAME_NOT_RESOLVED') {
-              console.log('Probably did not get the html at all');
-              return undefined;
-            }
-            if (error.details == 'ERR_INTERNET_DISCONNECTED') {
-              let time = new Date();
-              console.log('Time internet disconnected', time.toISOString());
-            }
-            return undefined;
+          .catch((err) => {
+            console.log('Error in fetching proxy:\n', err);
           })
       } else {
         console.log('now checking in ', normalizeDomain);
