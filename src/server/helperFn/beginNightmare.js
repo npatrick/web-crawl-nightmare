@@ -97,6 +97,11 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
               .catch(error => {
                 console.log('Do I have error.details below ====>\n', error.details);
                 console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
+                // case for proxy was a dud
+                if (error.details === '[replace me with dud message]') {
+                  console.log('Proxy is dud, trying another one...');
+                  return beginNightmare(domain, selectorStr, isUserWeb, useProxy);
+                }
                 if (error.details == 'Navigation timed out after 30000 ms') {
                   console.log('I got error details, seeeeee =>', error.details);
                   return undefined;
@@ -134,6 +139,11 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
           .catch(error => {
             console.log('Do I have error.details below ====>\n', error.details);
             console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
+            // case for proxy was a dud
+            if (error.details === '[replace me with dud message]') {
+              console.log('Proxy is dud, trying another one...');
+              return beginNightmare(domain, selectorStr, isUserWeb, useProxy);
+            }
             if (error.details == 'Navigation timed out after 30000 ms') {
               console.log('I got error details, seeeeee =>', error.details);
               return undefined;
