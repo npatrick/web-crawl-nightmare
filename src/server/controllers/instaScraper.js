@@ -25,11 +25,11 @@ function crawlerPromise(options) {
 }
 
 let resultSoFar = {};
+let resultObj = {};
 let resultSoFarArr;
 
 const instaScraper = async function(url) {
 
-  let resultObj = {};
 
 	await crawlerPromise({ uri: url })
     .then(($) => {
@@ -44,12 +44,14 @@ const instaScraper = async function(url) {
       	// '.b_algo' => bing query results
         resultList = bTemp;
       } else {
-      	return;
+        console.log('No more results...');
+      	return null;
       }
       let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
       let tempInsta = [];
 
       if (resultList.length === 0) {
+        console.log('Possibly no items to iterate on search results');
         return
       } else {
         // iterate google result items to retrieve insta url to visit
@@ -66,7 +68,10 @@ const instaScraper = async function(url) {
           }
           let instaUserPath = hrefStr.toLowerCase().slice(indexOfHttp, indexAfterUsername) + '/';
           // only add profiles urls and NOT posts urls
-          if (!instaUserPath.includes('/p/') && !instaUserPath.includes('/explore/')) {
+          if (!instaUserPath.includes('/p/') && 
+              !instaUserPath.includes('/explore/') &&
+              !instaUserPath.includes('/about/') &&
+              !instaUserPath.includes('/blog/')) {
             // retrieve username from a hyperlink and set it to instaUser
             let temp = instaUserPath.slice(instaUserPath.indexOf('.com/') + 5);
             let instaUser = temp.replace('/', '');
@@ -81,10 +86,20 @@ const instaScraper = async function(url) {
     })
     .then((resultObj) => {
       // check if users already exists in db
-      return resultObj ? InstaUser.find({ username: { $in: resultObj.dbUserCheck } }).exec() : [];
+      if (resultObj === null) {
+        return null;
+      }
+      if (resultObj) {
+        return InstaUser.find({ username: { $in: resultObj.dbUserCheck } }).exec()
+      } else {
+        return [];
+      }
     })
     .then((doc) => {
       let tempInstaToVisit;
+      if (doc === null) {
+        return null;
+      }
       if (doc.length !== 0) {
         console.log('****************** Detected Existing Users in DB ******************');
         let linkArr = doc.map(item => item.username);
@@ -100,7 +115,7 @@ const instaScraper = async function(url) {
         }).map(item => `instagram.com/${item}`);
       } else {
         // all are new
-        console.log('ALL ARE NEW!', doc);
+        console.log('ALL ARE NEW!', resultObj);
         tempInstaToVisit = resultObj.tempInsta.filter(item => {
           if (item === undefined || item === 'undefined') {
             return false;
@@ -119,10 +134,13 @@ const instaScraper = async function(url) {
     // 2nd main part => visit insta profiles to scrape //
     // /////////////////////////////////////////////// //
     .then((instaToVisit) => {
-      if (!instaToVisit || instaToVisit.length === 0) {
+      if (instaToVisit === null) {
+        return 'Nothing to visit';
+      } else if (instaToVisit.length === 0) {
         console.log('All Dups... no need to visit insta for current batch');
-        return;
+        return 'All are duplicates';
       }
+      //run params => (domain, selectorStr, isUserWeb, useProxy)
       return vo(run(instaToVisit, '#react-root', false, true))
         .then(cheerioArr => {
           let userWebList = [];
@@ -201,13 +219,19 @@ const instaScraper = async function(url) {
             console.log('USER makeup so far:', resultSoFar[username]);
             
           }) // end of forEach
-          console.log('NOW SAVING to DB... After instassss');
           resultSoFarArr = objToArr(resultSoFar);
+          resultSoFarArr.length > 0 ? console.log('NOW SAVING to DB... After instassss') : console.log('1 or some items are not valid for storing...');
           resultSoFar = {};
           return InstaUser.insertMany(resultSoFarArr, { ordered: false });
         })
         .then((response) => {
-          console.log('You see... I saved valid items.');
+          if (response === 'Nothing to visit') {
+            console.log('Search Engine returned none');
+          }
+          if (response === 'All are duplicates') {
+            console.log('Nothing was stored, all are duplicates');
+          }
+          console.log('Received response from DB after saving...');
           if (response.acknowledged === true) {
             console.log('ALL inserts have been added to DB');
           }
