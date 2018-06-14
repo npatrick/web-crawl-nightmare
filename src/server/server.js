@@ -2,6 +2,7 @@
 
 const express = require('express');
 const logger = require('morgan');
+const bodyParser = require('body-parser')
 const rp = require('request-promise');
 const Crawler = require('crawler');
 const db = require('../db/index');
@@ -14,6 +15,20 @@ const youtubeScraper = require('./controllers/youtubeScraper');
 const app = express();
 
 app.use(logger('dev'));
+
+// simple async/await handler for express
+function asyncHandler(p) {
+  return function(req, res, next) {
+    p(req, res).catch(next)
+  }
+}
+
+app.post(
+  '/sec', 
+  asyncHandler(async (req, res) => {
+    let params = req.params
+  })
+)
 
 db.on('open', () => {
   const c = new Crawler({ rateLimit: 3000 });
@@ -98,7 +113,7 @@ db.on('open', () => {
         // check for spaces inside a url path, likely
         // occuring when search engine detects a different language
         // it will include ` * Translate this page` in the url
-        tempInstaPath.includes(' ') ? instaUserPath = tempInstaPath.slice(0, tempInstaPath.index(' ')) : instaUserPath = tempInstaPath;
+        tempInstaPath.includes(' ') ? instaUserPath = tempInstaPath.slice(0, tempInstaPath.indexOf(' ')) : instaUserPath = tempInstaPath;
         // only add profiles urls and NOT posts urls
         if (!instaUserPath.includes('/p/') && 
             !instaUserPath.includes('/explore/') &&
