@@ -1,6 +1,7 @@
 const Nightmare = require('nightmare');
 const rp = require('request-promise');
 const cheerio = require('cheerio');
+const { blackList } = require('../../misc/resource');
 
 Nightmare.action('proxy',
   function(name, options, parent, win, renderer, done) {
@@ -21,7 +22,7 @@ Nightmare.action('proxy',
 );
 
 const nightmare = Nightmare({
-  show: true,
+  // show: true,
   // gotoTimeout => def:30s, 
   // only used if the DOM itself has not yet loaded
   gotoTimeout: 30000,
@@ -54,9 +55,7 @@ const nightmare = Nightmare({
 const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
   	let normalizeDomain = '';
     let siteBlacklisted = false;
-    const blackList = ['instagram.com/blog', 'vogue.com', 'vogue', 'consumingla.com', 'okayafrica.com', 
-                      'amodelsguide.com', 'theclothing-twpm.com', 'amazon.com',
-                      'dodgers.com'];
+    
     blackList.forEach((url) => {
       if (domain.toLowerCase().includes(url)) {
         siteBlacklisted = true;
@@ -98,8 +97,8 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
                 console.log('Do I have error.details below ====>\n', error.details);
                 console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
                 // case for proxy was a dud
-                if (error.details === '[replace me with dud message]') {
-                  console.log('Proxy is dud, trying another one...');
+                if (error.details === 'ERR_PROXY_CONNECTION_FAILED') {
+                  console.log('Proxy is dud, trying another proxy...');
                   return beginNightmare(domain, selectorStr, isUserWeb, useProxy);
                 }
                 if (error.details == 'Navigation timed out after 30000 ms') {
@@ -140,8 +139,8 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
             console.log('Do I have error.details below ====>\n', error.details);
             console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
             // case for proxy was a dud
-            if (error.details === '[replace me with dud message]') {
-              console.log('Proxy is dud, trying another one...');
+            if (error.details === 'ERR_PROXY_CONNECTION_FAILED') {
+              console.log('Proxy is dud, trying another proxy...');
               return beginNightmare(domain, selectorStr, isUserWeb, useProxy);
             }
             if (error.details == 'Navigation timed out after 30000 ms') {
