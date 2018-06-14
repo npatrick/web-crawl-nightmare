@@ -55,7 +55,8 @@ const nightmare = Nightmare({
 const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
   	let normalizeDomain = '';
     let siteBlacklisted = false;
-    
+    let proxyOnAir;
+
     blackList.forEach((url) => {
       if (domain.toLowerCase().includes(url)) {
         siteBlacklisted = true;
@@ -77,8 +78,9 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
         return await rp('http://localhost:8080/fetch-proxy') // rotating self-made proxy
           .then((currentProxy) => {
             console.log('fetch-proxy response:', currentProxy);
+            proxyOnAir = currentProxy;
             return nightmare
-              .proxy(currentProxy)
+              .proxy(proxyOnAir)
               .authentication(process.env.PROXYUSER, process.env.PROXYPASS)
               .goto(normalizeDomain)
               .wait(selectorStr)
@@ -100,6 +102,12 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
                 if (error.details === 'ERR_PROXY_CONNECTION_FAILED') {
                   console.log('Proxy is dud, trying another proxy...');
                   return beginNightmare(domain, selectorStr, isUserWeb, useProxy);
+                }
+                if (error.details === 'ERR_TUNNEL_CONNECTION_FAILED') {
+                  console.log('Proxy error, will likely remain to be error. Closing Nightmare now...');
+                  console.log('Insta url error for:', domain);
+                  console.log('Err on proxy:', proxyOnAir);
+                  return nightmare.end();
                 }
                 if (error.details == 'Navigation timed out after 30000 ms') {
                   console.log('I got error details, seeeeee =>', error.details);
@@ -142,6 +150,12 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
             if (error.details === 'ERR_PROXY_CONNECTION_FAILED') {
               console.log('Proxy is dud, trying another proxy...');
               return beginNightmare(domain, selectorStr, isUserWeb, useProxy);
+            }
+            if (error.details === 'ERR_TUNNEL_CONNECTION_FAILED') {
+              console.log('Proxy error, will likely remain to be error. Closing Nightmare now')
+              console.log('Insta url error for:', domain);
+              console.log('Err on proxy:', proxyOnAir);
+              return nightmare.end();
             }
             if (error.details == 'Navigation timed out after 30000 ms') {
               console.log('I got error details, seeeeee =>', error.details);
