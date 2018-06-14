@@ -3,10 +3,6 @@
 const express = require('express');
 const logger = require('morgan');
 const rp = require('request-promise');
-const cheerio = require('cheerio');
-const Nightmare = require('nightmare');
-const vo = require('vo');
-const mongoose = require('mongoose');
 const Crawler = require('crawler');
 const db = require('../db/index');
 const instaScraper = require('./controllers/instaScraper');
@@ -20,8 +16,6 @@ const app = express();
 app.use(logger('dev'));
 
 db.on('open', () => {
-  // const reqPromCrawl = require('./controllers/reqPromCrawl');
-  let searchArr = [];
   const c = new Crawler({ rateLimit: 3000 });
 
   function crawlerPromise(options) {
@@ -38,17 +32,32 @@ db.on('open', () => {
       c.queue(options);
     });
   }
-  ////////////////// GOOGLE AREA //////////////////////
+  ////////////////// Search Engine Area //////////////////////
+  // google max iterations = 32
   const googleQuery = 'https://www.google.com/search?q=site:www.instagram.com+%22los+angeles%22+LA+blogger+blog+influencer';
-  const gMax = 32; // 32 max
+  // bing max iterations = 72
+  const bingQuery = 'https://www2.bing.com/search?q=site%3ainstagram.com+"Los+Angeles"+LA+blogger+blog+influencer';
   let segment;
 
-  const googleSearch = async (nextCount) => {
+  const searchEngineCrawl = async (nextCount, searchEngine) => {
     let resultObj = {};
     let count = nextCount || 0;
-    segment = `&start=${count * 10}&sa=N`;
-    console.log('Current bracket url:', googleQuery + segment);
-    let $searchRes = await crawlerPromise({ uri: googleQuery + segment });
+    let searchQuery = searchEngine || googleQuery;
+
+    if (searchQuery.includes('google.com')) {
+      segment = `&start=${count * 10}&sa=N`;
+    } else if (searchQuery.includes('bing.com')) {
+      if (count === 0) {
+        segment = '&first=1';
+      } else if (count === 1) {
+        segment = '&first=13';
+      } else {
+        segment = `&first=${(14 * count) - 1}`;
+      }
+    }
+
+    console.log('Current bracket url:', searchQuery + segment);
+    let $searchRes = await crawlerPromise({ uri: searchQuery + segment });
 
     const $body = $searchRes('body');
     let gTemp = $body.find('div.g');
@@ -84,7 +93,12 @@ db.on('open', () => {
         if (indexAfterUsername === -1) {
           indexAfterUsername = undefined;
         }
-        let instaUserPath = hrefStr.toLowerCase().slice(indexOfHttp, indexAfterUsername) + '/';
+        let tempInstaPath = hrefStr.toLowerCase().slice(indexOfHttp, indexAfterUsername) + '/';
+        let instaUserPath;
+        // check for spaces inside a url path, likely
+        // occuring when search engine detects a different language
+        // it will include ` * Translate this page` in the url
+        tempInstaPath.includes(' ') ? instaUserPath = tempInstaPath.slice(0, tempInstaPath.index(' ')) : instaUserPath = tempInstaPath;
         // only add profiles urls and NOT posts urls
         if (!instaUserPath.includes('/p/') && 
             !instaUserPath.includes('/explore/') &&
@@ -102,39 +116,21 @@ db.on('open', () => {
     resultObj.tempInsta = tempInsta; // array of insta urls
     await instaScraper(resultObj);
     count++;
-    return await googleSearch(count);
+    return await searchEngineCrawl(count, searchQuery);
   };
 
-  googleSearch();
+  searchEngineCrawl(null, bingQuery);
 //////////////////////////////////////////////////////
+// issues on proxies:
+// if single proxy problem {
+//  check through bypassing proxy to use on nightmare
+//  repeat query but with different proxy + repeat proxy auth
+// }
+// if specific error only for Connection_Tunnel {
+//  none so far based on above, so maybe this
+//  have to repeat and fix nightmare? maybe restart?
+// }
 
-/////////////////////// BING AREA ////////////////////
-  // const bingQuery = 'https://www2.bing.com/search?q=site%3ainstagram.com+"Los+Angeles"+LA+blogger+blog+influencer';
-  // const bMax = 68; // 72 max
-  // let pageSector;
-
-  // for (let j = 0; j < bMax; j++) {
-  //   if (j === 0) {
-  //     pageSector = `&first=1`;
-  //   } else if (j === 1) {
-  //     pageSector = `&first=13`;
-  //   } else {
-  //     pageSector = `&first=${(14 * j) - 1}`;
-  //   }
-  //   searchArr.push(bingQuery + pageSector);
-  // }
-
-  // console.log('BING LISTINGS', searchArr);
-
-  // searchArr.reduce(function(accumulator, url) {
-  //   return accumulator.then(function(results) {
-  //     return reqPromCrawl(url);
-  //   });
-  // }, Promise.resolve([])).then(function(results) {
-  //   console.log('Bing query items ends...', results);
-  // });
-
-  // searchArr = [];
 ////////////////////// USER WEB AREA ////////////////////////
   // userSiteScraper();
 
