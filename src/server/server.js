@@ -44,87 +44,87 @@ function crawlerPromise(options) {
     c.queue(options);
   });
 }
-  let segment;
+let segment;
 
-  const searchEngineCrawl = async (nextCount, searchEngine) => {
-    let resultObj = {};
-    let count = nextCount || 0;
-    let searchQuery = searchEngine || googleQuery;
+const searchEngineCrawl = async (nextCount, searchEngine) => {
+  let resultObj = {};
+  let count = nextCount || 0;
+  let searchQuery = searchEngine || googleQuery;
 
-    if (searchQuery.includes('google')) {
-      segment = `&start=${count * 10}&sa=N`;
-    } else if (searchQuery.includes('bing')) {
-      if (count === 0) {
-        segment = '&first=1';
-      } else if (count === 1) {
-        segment = '&first=13';
-      } else {
-        segment = `&first=${(14 * count) - 1}`;
+  if (searchQuery.includes('google')) {
+    segment = `&start=${count * 10}&sa=N`;
+  } else if (searchQuery.includes('bing')) {
+    if (count === 0) {
+      segment = '&first=1';
+    } else if (count === 1) {
+      segment = '&first=13';
+    } else {
+      segment = `&first=${(14 * count) - 1}`;
+    }
+  }
+
+  console.log('Current bracket url:', searchQuery + segment);
+  let $searchRes = await crawlerPromise({ uri: searchQuery + segment });
+
+  const $body = $searchRes('body');
+  let gTemp = $body.find('div.g');
+  let bTemp = $body.find('.b_algo');
+  let resultList; 
+  if ($searchRes(gTemp[0]).html()) {
+    // 'div.g' => google specific query results
+    resultList = gTemp;
+  } else if ($searchRes(bTemp[0]).html()){
+    // '.b_algo' => bing query results
+    resultList = bTemp;
+  } else {
+    console.log('No more results...');
+    return;
+    
+  }
+  let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
+  let tempInsta = [];
+
+  if (resultList.length === 0) {
+    console.log('Possibly no items to iterate on search results');
+    return
+  } else {
+    // iterate google result items to retrieve insta url to visit
+    resultList.each((index, item) => {
+      // need to check from cheerio markup results because we dont exactly
+      // get what we see on browser
+      let hrefStr = $searchRes(item).find('.r > a').attr('href') || $searchRes(item).find('.b_attribution').text();
+      let indexOfHttp = hrefStr.indexOf('http');
+      let indexOfCom = hrefStr.indexOf('.com/');
+      // g vs b => bing returns exact insta href, google doesn't...
+      let indexAfterUsername = hrefStr.indexOf('/', indexOfCom + 5);
+      if (indexAfterUsername === -1) {
+        indexAfterUsername = undefined;
       }
-    }
-
-    console.log('Current bracket url:', searchQuery + segment);
-    let $searchRes = await crawlerPromise({ uri: searchQuery + segment });
-
-    const $body = $searchRes('body');
-    let gTemp = $body.find('div.g');
-    let bTemp = $body.find('.b_algo');
-    let resultList; 
-    if ($searchRes(gTemp[0]).html()) {
-      // 'div.g' => google specific query results
-      resultList = gTemp;
-    } else if ($searchRes(bTemp[0]).html()){
-      // '.b_algo' => bing query results
-      resultList = bTemp;
-    } else {
-      console.log('No more results...');
-      return;
-      
-    }
-    let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
-    let tempInsta = [];
-
-    if (resultList.length === 0) {
-      console.log('Possibly no items to iterate on search results');
-      return
-    } else {
-      // iterate google result items to retrieve insta url to visit
-      resultList.each((index, item) => {
-        // need to check from cheerio markup results because we dont exactly
-        // get what we see on browser
-        let hrefStr = $searchRes(item).find('.r > a').attr('href') || $searchRes(item).find('.b_attribution').text();
-        let indexOfHttp = hrefStr.indexOf('http');
-        let indexOfCom = hrefStr.indexOf('.com/');
-        // g vs b => bing returns exact insta href, google doesn't...
-        let indexAfterUsername = hrefStr.indexOf('/', indexOfCom + 5);
-        if (indexAfterUsername === -1) {
-          indexAfterUsername = undefined;
-        }
-        let tempInstaPath = hrefStr.toLowerCase().slice(indexOfHttp, indexAfterUsername) + '/';
-        let instaUserPath;
-        // check for spaces inside a url path, likely
-        // occuring when search engine detects a different language
-        // it will include ` * Translate this page` in the url
-        tempInstaPath.includes(' ') ? instaUserPath = tempInstaPath.slice(0, tempInstaPath.indexOf(' ')) : instaUserPath = tempInstaPath;
-        // only add profiles urls and NOT posts urls
-        if (!instaUserPath.includes('/p/') && 
-            !instaUserPath.includes('/explore/') &&
-            !instaUserPath.includes('/about/') &&
-            !instaUserPath.includes('/blog/')) {
-          // retrieve username from a hyperlink and set it to instaUser
-          let temp = instaUserPath.slice(instaUserPath.indexOf('.com/') + 5);
-          let instaUser = temp.replace('/', '');
-          tempInsta.push(instaUserPath);
-          dbUserCheck.push(instaUser);
-        }
-      })
-    }
-    resultObj.dbUserCheck = dbUserCheck; // array of usernames
-    resultObj.tempInsta = tempInsta; // array of insta urls
-    await instaScraper(resultObj);
-    count++;
-    return await searchEngineCrawl(count, searchQuery);
-  };
+      let tempInstaPath = hrefStr.toLowerCase().slice(indexOfHttp, indexAfterUsername) + '/';
+      let instaUserPath;
+      // check for spaces inside a url path, likely
+      // occuring when search engine detects a different language
+      // it will include ` * Translate this page` in the url
+      tempInstaPath.includes(' ') ? instaUserPath = tempInstaPath.slice(0, tempInstaPath.indexOf(' ')) : instaUserPath = tempInstaPath;
+      // only add profiles urls and NOT posts urls
+      if (!instaUserPath.includes('/p/') && 
+          !instaUserPath.includes('/explore/') &&
+          !instaUserPath.includes('/about/') &&
+          !instaUserPath.includes('/blog/')) {
+        // retrieve username from a hyperlink and set it to instaUser
+        let temp = instaUserPath.slice(instaUserPath.indexOf('.com/') + 5);
+        let instaUser = temp.replace('/', '');
+        tempInsta.push(instaUserPath);
+        dbUserCheck.push(instaUser);
+      }
+    })
+  }
+  resultObj.dbUserCheck = dbUserCheck; // array of usernames
+  resultObj.tempInsta = tempInsta; // array of insta urls
+  await instaScraper(resultObj);
+  count++;
+  return await searchEngineCrawl(count, searchQuery);
+};
 
 db.on('open', () => {
   ////////////////// Search Engine Area //////////////////////
@@ -176,16 +176,6 @@ app.post(
     }
   })
 );
-//////////////////////////////////////////////////////
-// issues on proxies:
-// if single proxy problem {
-//  check through bypassing proxy to use on nightmare
-//  repeat query but with different proxy + repeat proxy auth
-// }
-// if specific error only for Connection_Tunnel {
-//  none so far based on above, so maybe this
-//  have to repeat and fix nightmare? maybe restart?
-// }
 
 ////////////////////// USER WEB AREA ////////////////////////
   // userSiteScraper();
