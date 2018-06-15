@@ -21,6 +21,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parses the text as JSON and set to req.body
 app.use(bodyParser.json());
 
+let processing = false;
+
 // simple async/await handler for express
 function asyncHandler(p) {
   return function(req, res, next) {
@@ -105,7 +107,12 @@ const searchEngineCrawl = async (nextCount, searchEngine) => {
       // check for spaces inside a url path, likely
       // occuring when search engine detects a different language
       // it will include ` * Translate this page` in the url
-      tempInstaPath.includes(' ') ? instaUserPath = tempInstaPath.slice(0, tempInstaPath.indexOf(' ')) : instaUserPath = tempInstaPath;
+      if (tempInstaPath.includes(' '))  {
+        let spaceIndex = tempInstaPath.indexOf(String.fromCharCode(183));
+        instaUserPath = tempInstaPath.slice(0, spaceIndex - 1);
+      } else { 
+        instaUserPath = tempInstaPath;
+      }
       // only add profiles urls and NOT posts urls
       if (!instaUserPath.includes('/p/') && 
           !instaUserPath.includes('/explore/') &&
@@ -144,6 +151,7 @@ let baseQ;
 app.post(
   '/sec', 
   asyncHandler(async (req, res) => {
+    processing = true;
     console.log('Q is:', req.query);
     const { searchEngine, userQuery } = req.query;
     let tempStr;
@@ -171,11 +179,15 @@ app.post(
 
       const result = await InstaUser.find({}).count();
       console.log('Whats result?', result);
-
+      processing = false;
       res.status(200).send({total: result});
     }
   })
 );
+
+app.get('/status', (req ,res) => {
+  res.status(200).send({'processing': processing});
+});
 
 ////////////////////// USER WEB AREA ////////////////////////
   // userSiteScraper();
