@@ -22,6 +22,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 let processing = false;
+let searchStack = [];
 
 // simple async/await handler for express
 function asyncHandler(p) {
@@ -151,7 +152,16 @@ let baseQ;
 app.post(
   '/sec', 
   asyncHandler(async (req, res) => {
+    // NOTE: un-comment once necessary changes have been done
+    // if (typeof searchStack[0] !== 'object') {
+    //   return res.send('Empty search stack, please add by going to /add-query');
+    // }
+
     processing = true;
+    res.status(202).send('I am working on it...\nCheck on /status');
+    // NOTE: reflect changes based on below
+    // const { searchEngine, userQuery } = searchStack.shift();
+
     console.log('Q is:', req.query);
     const { searchEngine, userQuery } = req.query;
     let tempStr;
@@ -179,8 +189,14 @@ app.post(
 
       const result = await InstaUser.find({}).count();
       console.log('Whats result?', result);
-      processing = false;
-      res.status(200).send({total: result});
+      processing = false; // remove this once changes are ready
+
+      // NOTE: uncomment once ready
+      // if (typeof searchStack[0] !== 'object') {
+      //   processing = false;
+      // } else {
+      //   rp('/sec');
+      // }
     }
   })
 );
@@ -189,19 +205,64 @@ app.get('/status', (req ,res) => {
   res.status(200).send({'processing': processing});
 });
 
+app.post('/add-query', (req, res) => {
+  // TODO: build this
+  // extract post method body
+  // searchStack.push(variableNameOfNormQuery);
+  res.send('added to search stack');
+});
+
 ////////////////////// USER WEB AREA ////////////////////////
-  // userSiteScraper();
-
+app.get('/user-scraper', 
+  asyncHandler(async (req, res) => {
+    if (!processing) {
+      processing = true;
+      await userSiteScraper();
+      processing = false;
+      res.send('Finished visiting user urls!');
+    } else {
+      res.send('Currently in process of another task');
+    }
+  })
+);
 ////////////////////// Twitter Area ////////////////////////
-  // twitterScraper();
-
+app.get('/twitter-scraper', 
+  asyncHandler(async (req, res) => {
+    if (!processing) {
+      processing = true;
+      await twitterScraper();
+      processing = false;
+      res.send('Finished visiting twitter urls!');
+    } else {
+      res.send('Currently in process of another task');
+    }
+  })
+);
 ////////////////////// Facebook Area ///////////////////////
-  // facebookScraper();
-
-////////////////////// YouTube Area //////////////////////
-  // youtubeScraper();
-
-///////////////////////////////////////////////////////////
-// })
+app.get('/facebook-scraper', 
+  asyncHandler(async (req, res) => {
+    if (!processing) {
+      processing = true;
+      await facebookScraper();
+      processing = false;
+      res.send('Finished visiting facebook urls!');
+    } else {
+      res.send('Currently in process of another task');
+    }
+  })
+);
+////////////////////// YouTube Area ///////////////////////
+app.get('/youtube-scraper', 
+  asyncHandler(async (req, res) => {
+    if (!processing) {
+      processing = true;
+      await youtubeScraper();
+      processing = false;
+      res.send('Finished visiting youtube urls!');
+    } else {
+      res.send('Currently in process of another task');
+    }
+  })
+);
 
 module.exports = app;
