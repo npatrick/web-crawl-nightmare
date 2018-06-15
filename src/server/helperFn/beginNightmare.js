@@ -96,7 +96,7 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
                 return $;
               })
               .catch(error => {
-                console.log('Do I have error.details below ====>\n', error.details);
+                console.log('Do I have error.details below ====>', error.details);
                 console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
                 // case for proxy was a dud
                 if (error.details === 'ERR_PROXY_CONNECTION_FAILED') {

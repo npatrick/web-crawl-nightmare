@@ -11,10 +11,15 @@ const userSiteScraper = require('./controllers/userSiteScraper');
 const twitterScraper = require('./controllers/twitterScraper');
 const facebookScraper = require('./controllers/facebookScraper');
 const youtubeScraper = require('./controllers/youtubeScraper');
-
+const InstaUser = require('../db/instaUserSchema');
 const app = express();
 
 app.use(logger('dev'));
+// modify express to take url that contain any format/type of file
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// parses the text as JSON and set to req.body
+app.use(bodyParser.json());
 
 // simple async/await handler for express
 function asyncHandler(p) {
@@ -23,35 +28,22 @@ function asyncHandler(p) {
   }
 }
 
-app.post(
-  '/sec', 
-  asyncHandler(async (req, res) => {
-    let params = req.params
-  })
-)
+const c = new Crawler({ rateLimit: 3000 });
 
-db.on('open', () => {
-  const c = new Crawler({ rateLimit: 3000 });
-
-  function crawlerPromise(options) {
-    return new Promise((resolve, reject) => {
-      options.callback = (err, res, done) => {
-        if (err) {
-          reject(err);
-        } else {
-          let $ = res.$;
-          resolve($);
-        }
-        done();
+function crawlerPromise(options) {
+  return new Promise((resolve, reject) => {
+    options.callback = (err, res, done) => {
+      if (err) {
+        reject(err);
+      } else {
+        let $ = res.$;
+        resolve($);
       }
-      c.queue(options);
-    });
-  }
-  ////////////////// Search Engine Area //////////////////////
-  // google max iterations = 32
-  const googleQuery = 'https://www.google.com/search?q=site:www.instagram.com+%22los+angeles%22+LA+blogger+blog+influencer';
-  // bing max iterations = 72
-  const bingQuery = 'https://www2.bing.com/search?q=site%3ainstagram.com+"Los+Angeles"+LA+blogger+blog+influencer';
+      done();
+    }
+    c.queue(options);
+  });
+}
   let segment;
 
   const searchEngineCrawl = async (nextCount, searchEngine) => {
@@ -59,9 +51,9 @@ db.on('open', () => {
     let count = nextCount || 0;
     let searchQuery = searchEngine || googleQuery;
 
-    if (searchQuery.includes('google.com')) {
+    if (searchQuery.includes('google')) {
       segment = `&start=${count * 10}&sa=N`;
-    } else if (searchQuery.includes('bing.com')) {
+    } else if (searchQuery.includes('bing')) {
       if (count === 0) {
         segment = '&first=1';
       } else if (count === 1) {
@@ -134,7 +126,56 @@ db.on('open', () => {
     return await searchEngineCrawl(count, searchQuery);
   };
 
-  searchEngineCrawl(null, bingQuery);
+db.on('open', () => {
+  ////////////////// Search Engine Area //////////////////////
+  // google max iterations = 32
+  const googleQuery = 'https://www.google.com/search?q=site:www.instagram.com+%22los+angeles%22+LA+blogger+blog+influencer';
+  // bing max iterations = 72
+  const bingQuery = 'https://www2.bing.com/search?q=site%3ainstagram.com+"Los+Angeles"+LA+blogger+blog+influencer';
+
+  // searchEngineCrawl(null, bingQuery);
+})
+//////////////////////////////////////////////////////
+let baseQ;
+// params {
+//  searchEngine: [String]
+//  userQuery: 'translate spaces with +'
+// }
+app.post(
+  '/sec', 
+  asyncHandler(async (req, res) => {
+    console.log('Q is:', req.query);
+    const { searchEngine, userQuery } = req.query;
+    let tempStr;
+    let normQ; 
+    if (searchEngine || userQuery) {
+      if (searchEngine === 'google') {
+        baseQ = 'https://www.google.com/search?q=site:www.instagram.com';
+      } else if (searchEngine === 'bing') {
+        baseQ = 'https://www2.bing.com/search?q=site:instagram.com';
+      } else {
+        baseQ = 'https://www.google.com/search?q=site:www.instagram.com';
+      }
+      if (userQuery.includes('"')) {
+        tempStr = userQuery.replace(/\"/g, '%22');
+      } else {
+        tempStr = userQuery;
+      }
+      if (tempStr.includes(' ')) {
+        normQ = tempStr.replace(/\s/g, '+');
+      } else {
+        normQ = tempStr;
+      }
+
+      await searchEngineCrawl(null, `${baseQ}+${normQ}`);
+
+      const result = await InstaUser.find({}).count();
+      console.log('Whats result?', result);
+
+      res.status(200).send({total: result});
+    }
+  })
+);
 //////////////////////////////////////////////////////
 // issues on proxies:
 // if single proxy problem {
@@ -159,6 +200,6 @@ db.on('open', () => {
   // youtubeScraper();
 
 ///////////////////////////////////////////////////////////
-})
+// })
 
 module.exports = app;
