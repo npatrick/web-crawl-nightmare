@@ -5,26 +5,34 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=development node ./src/server/index.js",
+    "build": "node_modules/.bin/webpack -w --config webpack.js",
     "debug": "DEBUG=nightmare:actions* NODE_ENV=development node ./src/server/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": ""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.3",
     "cheerio": "^1.0.0-rc.2",
-    "crawler": "^1.1.2",
+    "crawler": "^1.1.4",
     "dotenv": "^5.0.1",
     "express": "^4.16.3",
     "mongoose": "^5.0.17",
     "morgan": "^1.9.0",
     "nightmare": "^3.0.1",
     "path": "^0.12.7",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
     "request-promise": "^4.2.2",
     "vo": "^4.0.2",
     "xvfb": "^0.2.3"
   },
   "devDependencies": {
-    "nodemon": "^1.17.3"
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "nodemon": "^1.17.3",
+    "webpack": "^4.12.0"
   }
 }
