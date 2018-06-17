@@ -2,7 +2,8 @@
 
 const express = require('express');
 const logger = require('morgan');
-const bodyParser = require('body-parser')
+const bodyParser = require('body-parser');
+const path = require('path');
 const rp = require('request-promise');
 const Crawler = require('crawler');
 const db = require('../db/index');
@@ -20,6 +21,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // parses the text as JSON and set to req.body
 app.use(bodyParser.json());
+
+app.use('/', express.static(path.join(__dirname, '../../public')));
 
 let processing = false;
 let searchStack = [];
