@@ -69,7 +69,17 @@ class App extends Component {
 				<br />
 				<div className="apiMessage">
 					<h3>Server Response:</h3>
-						<Message data={this.state.apiMessage} />
+						<table>
+							<thead>
+								<tr>
+									<th>Search Engine</th>
+									<th>Query</th>
+								</tr>
+							</thead>
+							<tbody>
+								<Message data={this.state.apiMessage} />
+							</tbody>
+						</table>
 				</div>
 			</div>
 		)
