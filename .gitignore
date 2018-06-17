@@ -1,6 +1,10 @@
 # Dependency directories
 node_modules
 
+# Compiler Outputs
+public/bundle.js
+public/bundle.js.map
+
 # Logs
 logs
 *.log
