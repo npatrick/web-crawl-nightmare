@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
 import { post as POST } from 'axios';
+import Message from './components/message.js';
 
 class App extends Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			apiMessage: '',
+			apiMessage: [],
 			userQuery: '',
-			searchEngine: '' // TODO: assign changes on this state
+			searchEngine: ''
 		}
 
 		this.handleSubmit = this.handleSubmit.bind(this);
@@ -52,7 +53,7 @@ class App extends Component {
 				    Search Engine:
 				  </label>
 			    <select className="searchEngine" name="searchEngine" onChange={this.handleEngine}>
-			    	<option value>Please choose one</option>
+			    	<option value>Choose one...</option>
 			    	<option>Google</option>
 			    	<option>Bing</option>
 			    </select>
@@ -68,7 +69,7 @@ class App extends Component {
 				<br />
 				<div className="apiMessage">
 					<h3>Server Response:</h3>
-					{this.state.apiMessage}
+						<Message data={this.state.apiMessage} />
 				</div>
 			</div>
 		)
