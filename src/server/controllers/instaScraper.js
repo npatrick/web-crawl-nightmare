@@ -52,7 +52,7 @@ const instaScraper = async function(resultObj) {
           } else {
             return true;
           }
-        }).map(item => `instagram.com/${item}`);
+        });
       }
       console.log('!!!! FILTER Insta URL RESULT !!!!! :\n', tempInstaToVisit)
       return tempInstaToVisit;
