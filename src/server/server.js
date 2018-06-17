@@ -205,14 +205,12 @@ app.post(
 );
 
 app.get('/status', (req ,res) => {
-  res.status(200).send({'processing': processing});
+  res.status(200).send({'processing': processing, 'stack': searchStack});
 });
 
 app.post('/add-query', (req, res) => {
-  // TODO: build this
-  // extract post method body
-  // searchStack.push(variableNameOfNormQuery);
-  res.send('added to search stack');
+  searchStack.push(req.body);
+  res.send('added to search stack...');
 });
 
 ////////////////////// USER WEB AREA ////////////////////////
