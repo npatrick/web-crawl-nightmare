@@ -210,7 +210,7 @@ app.get('/status', (req ,res) => {
 
 app.post('/add-query', (req, res) => {
   searchStack.push(req.body);
-  res.send('added to search stack...');
+  res.send(searchStack);
 });
 
 ////////////////////// USER WEB AREA ////////////////////////
