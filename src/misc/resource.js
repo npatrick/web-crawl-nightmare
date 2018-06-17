@@ -4,6 +4,6 @@ module.exports.keyword = ['food', 'foodie', 'style', 'fashion', 'beauty', 'makeu
 
 module.exports.topDomain = ['.com', '.net', '.org', '.biz', '.fr', '.info', '.media', '.global', '.email', '.ly', '.us', '.nu', '.ch', '.xyz', '.it'];
 
-module.exports.blackList = ['instagram.com/about', 'instagram.com/blog', 'vogue.com', 'vogue', 'consumingla.com', 'okayafrica.com', 
+module.exports.blackList = ['instagram.com/about', 'instagram.com/blog', '...', 'vogue.com', 'vogue', 'consumingla.com', 'okayafrica.com', 
                       'amodelsguide.com', 'theclothing-twpm.com', 'amazon.com',
                       'dodgers.com'];
