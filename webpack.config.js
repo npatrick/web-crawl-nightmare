@@ -13,16 +13,14 @@ module.exports = {
 	module: {
 		rules: [
 			{
-				test: /\.jsx?$/,
+				test: /\.jsx?$/, // Match both .js and .jsx files
 				exclude: /node_modules/,
-				use: [
-					{
-						loader: 'babel-loader',
-						options: {
-							presets: ['react']
-						}
+				use: {
+					loader: 'babel-loader',
+					options: {
+						presets: ['react', 'env']
 					}
-				]
+				}
 			}
 		]
 	}
