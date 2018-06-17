@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=development node ./src/server/index.js",
-    "build-dev": "node_modules/.bin/webpack -w --mode=development --config webpack.js",
-    "build-prod": "node_modules/.bin/webpack -w --mode=production --config webpack.js",
+    "build-dev": "node_modules/.bin/webpack -w --mode=development --config webpack.config.js",
+    "build-prod": "node_modules/.bin/webpack -w --mode=production --config webpack.config.js",
     "debug": "DEBUG=nightmare:actions* NODE_ENV=development node ./src/server/server.js",
     "test": ""
   },
