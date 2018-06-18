@@ -70,8 +70,19 @@ const instaScraper = async function(resultObj) {
         console.log('All Dups... no need to visit insta for current batch');
         return 'All are duplicates';
       }
+      // check for duplicate urls in the same search result array
+      let uniqueUrls = {};
+      let uniqueUrlArr = [];
+      instaToVisit.forEach((item) => {
+        if (!uniqueUrls[item]) {
+          uniqueUrls[item] = 1;
+        }
+      });
+      for (let key in uniqueUrls) {
+        uniqueUrlArr.push(key);
+      }
       //run params => (domain, selectorStr, isUserWeb, useProxy)
-      return vo(run(instaToVisit, '#react-root', false, true))
+      return vo(run(uniqueUrlArr, '#react-root', false, true))
         .then(cheerioArr => {
           let userWebList = [];
           cheerioArr.forEach(($insta) => {
