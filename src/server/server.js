@@ -5,6 +5,7 @@ const logger = require('morgan');
 const bodyParser = require('body-parser');
 const path = require('path');
 const rp = require('request-promise');
+const axios = require('axios');
 const Crawler = require('crawler');
 const db = require('../db/index');
 const instaScraper = require('./controllers/instaScraper');
@@ -55,7 +56,7 @@ let segment;
 const searchEngineCrawl = async (nextCount, searchEngine) => {
   let resultObj = {};
   let count = nextCount || 0;
-  let searchQuery = searchEngine || googleQuery;
+  let searchQuery = searchEngine;
 
   if (searchQuery.includes('google')) {
     segment = `&start=${count * 10}&sa=N`;
@@ -148,58 +149,49 @@ db.on('open', () => {
 })
 //////////////////////////////////////////////////////
 let baseQ;
-// params {
-//  searchEngine: [String]
-//  userQuery: 'translate spaces with +'
-// }
-app.post(
+
+app.get(
   '/sec', 
   asyncHandler(async (req, res) => {
-    // NOTE: un-comment once necessary changes have been done
-    // if (typeof searchStack[0] !== 'object') {
-    //   return res.send('Empty search stack, please add by going to /add-query');
-    // }
+    if (typeof searchStack[0] !== 'object') {
+      return res.send('Empty search stack, please add by going to /add-query');
+    }
 
     processing = true;
     res.status(202).send('I am working on it...\nCheck on /status');
-    // NOTE: reflect changes based on below
-    // const { searchEngine, userQuery } = searchStack.shift();
 
-    console.log('Q is:', req.query);
-    const { searchEngine, userQuery } = req.query;
-    let tempStr;
+    const { searchEngine, userQuery } = searchStack.shift();
     let normQ; 
+
+    console.log('Engine is:', searchEngine);
+    console.log('Q is', userQuery);
+
     if (searchEngine || userQuery) {
-      if (searchEngine === 'google') {
+      if (searchEngine === 'Google') {
         baseQ = 'https://www.google.com/search?q=site:www.instagram.com';
-      } else if (searchEngine === 'bing') {
+      } else if (searchEngine === 'Bing') {
         baseQ = 'https://www2.bing.com/search?q=site:instagram.com';
       } else {
         baseQ = 'https://www.google.com/search?q=site:www.instagram.com';
       }
-      if (userQuery.includes('"')) {
-        tempStr = userQuery.replace(/\"/g, '%22');
-      } else {
-        tempStr = userQuery;
-      }
-      if (tempStr.includes(' ')) {
-        normQ = tempStr.replace(/\s/g, '+');
-      } else {
-        normQ = tempStr;
-      }
+
+      normQ = userQuery;
 
       await searchEngineCrawl(null, `${baseQ}+${normQ}`);
 
       const result = await InstaUser.find({}).count();
       console.log('Whats result?', result);
-      processing = false; // remove this once changes are ready
 
-      // NOTE: uncomment once ready
-      // if (typeof searchStack[0] !== 'object') {
-      //   processing = false;
-      // } else {
-      //   rp('/sec');
-      // }
+      if (typeof searchStack[0] !== 'object') {
+        console.log('Nothing on stack. Ending the crawl...');
+        processing = false;
+      } else {
+        console.log('Next Q to crawl');
+        return await axios.get('http://localhost:3000/sec')
+          .catch(err => {
+            console.log('oops Axios:', err);
+          })
+      }
     }
   })
 );
