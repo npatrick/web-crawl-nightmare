@@ -58,8 +58,14 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
     let proxyOnAir;
 
     blackList.forEach((url) => {
-      if (domain.toLowerCase().includes(url)) {
-        siteBlacklisted = true;
+      let tempNorm;
+      domain.includes('https://www') ? tempNorm = domain : tempNorm = `https://www.${domain}`;
+      if (tempNorm.toLowerCase().includes(url)) {
+        // check usernames that also contain some words in blacklist
+        let tempUrl = `https://www.${url}`;
+        if (tempNorm === tempUrl) {
+          siteBlacklisted = true;
+        }
       }
     })
     if (!siteBlacklisted) {
