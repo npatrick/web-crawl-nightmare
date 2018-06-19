@@ -25,13 +25,13 @@ const nightmare = Nightmare({
   // show: true,
   // gotoTimeout => def:30s, 
   // only used if the DOM itself has not yet loaded
-  gotoTimeout: 30000,
+  gotoTimeout: 10000,
   // waitTimeout => def:30s, throws an exception if .wait()
   // didnt return true within the set timeframe
-  waitTimeout: 30000,
+  waitTimeout: 10000,
   // executionTimeout => def:30s, max time to wait for an
   // .evaluate() statement to complete
-  executionTimeout: 30000,
+  executionTimeout: 10000,
   // pollInterval => def:250ms, wait time between checks
   // for the .wait() condition to be successful
   pollInterval: 50,
