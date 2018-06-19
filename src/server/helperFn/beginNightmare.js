@@ -2,6 +2,7 @@ const Nightmare = require('nightmare');
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const { blackList } = require('../../misc/resource');
+const PendingInsta = require('../../db/pendingInstaSchema');
 
 Nightmare.action('proxy',
   function(name, options, parent, win, renderer, done) {
@@ -154,8 +155,13 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
             console.log(`Execution failed on beginNightmare fn for ${normalizeDomain}\n Error stat:`, error);
             // case for proxy was a dud
             if (error.details === 'ERR_PROXY_CONNECTION_FAILED') {
-              console.log('Proxy is dud, trying another proxy...');
-              return beginNightmare(domain, selectorStr, isUserWeb, useProxy);
+              console.log('Proxy is dud, will add it to pending insta list...');
+              PendingInsta.create({ instaUrl: domain }).exec();
+              nightmare.refresh();
+            }
+            if (error.details === 'ERR_CONNECTION_RESET') {
+              PendingInsta.create({ instaUrl: domain }).exec();
+              nightmare.refresh();
             }
             if (error.details === 'ERR_TUNNEL_CONNECTION_FAILED') {
               console.log('Proxy error, will likely remain to be error. Closing Nightmare now')
@@ -163,7 +169,7 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
               console.log('Err on proxy:', proxyOnAir);
               return nightmare.end();
             }
-            if (error.details == 'Navigation timed out after 30000 ms') {
+            if (error.details == 'Navigation timed out after 15000 ms') {
               console.log('I got error details, seeeeee =>', error.details);
               return undefined;
             }
