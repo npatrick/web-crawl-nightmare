@@ -215,6 +215,11 @@ app.post('/add-query', (req, res) => {
     return res.send(searchStack);
   }
   searchStack.push(req.body);
+
+  if (!processing && searchStack.length !== 0) {
+    console.log('Will now start processing')
+    axios.get('/sec');
+  }
   res.send(searchStack);
 });
 
