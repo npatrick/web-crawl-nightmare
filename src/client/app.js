@@ -1,6 +1,12 @@
 import React, { Component } from 'react';
 import { post as POST, get as GET } from 'axios';
-import Message from './components/message.js';
+import Message from './components/message';
+import Wrapper from './components/Wrapper';
+import Outer from './components/Outer';
+import Inner from './components/Inner';
+import Button from './components/Button';
+import InputBox from './components/InputBox';
+import bgImg from './assets/bgImg.jpeg';
 
 class App extends Component {
 	constructor(props) {
@@ -69,28 +75,26 @@ class App extends Component {
 
 	render() {
 		return (
-			<div className="App">
-				<h2>Add query for crawling</h2>
+			<Outer>
+				<h1>Crawler</h1>
 				<form onSubmit={this.handleSubmit}>
-				  <input id="searchBox" type="text" name="userQuery" onChange={this.handleChange}></input>
+				  <InputBox name="userQuery" onChange={this.handleChange}></InputBox>
 				  <br />
 				  <br />
-				  <label>
-				    Search Engine:
-				  </label>
-			    <select className="searchEngine" name="searchEngine" onChange={this.handleEngine}>
+				  <label>Search Engine:</label>
+			    <select name="searchEngine" onChange={this.handleEngine}>
 			    	<option value>Choose one...</option>
 			    	<option>Google</option>
 			    	<option>Bing</option>
 			    </select>
 			    <br />
 			    <br />
-				  <input type="submit" value="Submit" />
+				  <Button primary type="submit">Submit</Button>
 				</form>
 				<br />
 				<br />
-				<div className="apiMessage">
-					<h3>Server Response:</h3>
+				<Wrapper>
+					<h3>Current Query Stack:</h3>
 						<table>
 							<thead>
 								<tr>
@@ -102,8 +106,8 @@ class App extends Component {
 								<Message data={this.state.searchStack} />
 							</tbody>
 						</table>
-				</div>
-			</div>
+				</Wrapper>
+			</Outer>
 		)
 	}
 }
