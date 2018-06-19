@@ -201,6 +201,19 @@ app.get('/status', (req ,res) => {
 });
 
 app.post('/add-query', (req, res) => {
+  let { searchEngine, userQuery } = req.body;
+  if (searchEngine === 'Use all') {
+    let firstEngine = {
+      searchEngine: 'Google',
+      userQuery: userQuery
+    };
+    let secEngine = {
+      searchEngine: 'Bing',
+      userQuery: userQuery
+    }
+    searchStack.push(firstEngine, secEngine);
+    return res.send(searchStack);
+  }
   searchStack.push(req.body);
   res.send(searchStack);
 });
