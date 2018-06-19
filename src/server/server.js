@@ -212,13 +212,16 @@ app.post('/add-query', (req, res) => {
       userQuery: userQuery
     }
     searchStack.push(firstEngine, secEngine);
+    if (!processing && searchStack.length !== 0) {
+      console.log('Will now start processing');
+      axios.get('http://localhost:3000/sec');
+    }
     return res.send(searchStack);
   }
   searchStack.push(req.body);
-
   if (!processing && searchStack.length !== 0) {
-    console.log('Will now start processing')
-    axios.get('/sec');
+    console.log('Will now start processing');
+    axios.get('http://localhost:3000/sec');
   }
   res.send(searchStack);
 });
