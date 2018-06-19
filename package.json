@@ -19,6 +19,7 @@
     "crawler": "^1.1.4",
     "dotenv": "^5.0.1",
     "express": "^4.16.3",
+    "file-loader": "^1.1.11",
     "mongoose": "^5.0.17",
     "morgan": "^1.9.0",
     "nightmare": "^3.0.1",
@@ -26,6 +27,7 @@
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "request-promise": "^4.2.2",
+    "styled-components": "^3.3.2",
     "vo": "^4.0.2",
     "xvfb": "^0.2.3"
   },
