@@ -7,7 +7,7 @@ import { injectGlobal } from 'styled-components';
 
 injectGlobal`
 	body {
-		font: Roboto Mono;
+		font-family: monospace;
 		background: url(${bgImg}) no-repeat center center fixed; 
 	  -webkit-background-size: cover;
 	  -moz-background-size: cover;

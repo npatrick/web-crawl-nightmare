@@ -7,6 +7,9 @@ import Inner from './components/Inner';
 import Button from './components/Button';
 import InputBox from './components/InputBox';
 import bgImg from './assets/bgImg.jpeg';
+import { HeaderTextH1 } from './components/HeaderText';
+import CustomCheckCircle from './components/CustomCheckCircle';
+
 
 class App extends Component {
 	constructor(props) {
@@ -16,7 +19,8 @@ class App extends Component {
 			apiMessage: [],
 			userQuery: '',
 			searchEngine: '',
-			searchStack: []
+			searchStack: [],
+			submitted: false
 		}
 
 		this.handleSubmit = this.handleSubmit.bind(this);
@@ -61,35 +65,37 @@ class App extends Component {
 			searchEngine: searchEngine,
 			userQuery: normQ
 		})
-		.then(res => this.setState({ apiMessage: res.data }))
+		.then(res => this.setState({ apiMessage: res.data, submitted: true }))
 		.catch(err => console.log('error in /add-query', err))
 	}
 
 	handleEngine(e) {
-		this.setState({ searchEngine: e.target.value });
+		this.setState({ searchEngine: e.target.value, submitted: false });
 	}
 
 	handleChange(e) {
-		this.setState({ userQuery: e.target.value });
+		this.setState({ userQuery: e.target.value, submitted: false });
 	}
 
 	render() {
 		return (
 			<Outer>
-				<h1>Crawler</h1>
+				<HeaderTextH1>Crawler</HeaderTextH1>
 				<form onSubmit={this.handleSubmit}>
-				  <InputBox name="userQuery" onChange={this.handleChange}></InputBox>
+				  <InputBox required name="userQuery" onChange={this.handleChange}></InputBox>
 				  <br />
 				  <br />
 				  <label>Search Engine:</label>
-			    <select name="searchEngine" onChange={this.handleEngine}>
-			    	<option value>Choose one...</option>
-			    	<option>Google</option>
-			    	<option>Bing</option>
+			    <select required name="searchEngine" onChange={this.handleEngine}>
+			    	<option value=''>Choose one...</option>
+			    	<option value='Use all'>Use all</option>
+			    	<option value='Google'>Google</option>
+			    	<option value='Bing'>Bing</option>
 			    </select>
 			    <br />
 			    <br />
 				  <Button primary type="submit">Submit</Button>
+				  <CustomCheckCircle size='26px' submitted={this.state.submitted} />
 				</form>
 				<br />
 				<br />
