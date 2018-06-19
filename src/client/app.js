@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { post as POST } from 'axios';
+import { post as POST, get as GET } from 'axios';
 import Message from './components/message.js';
 
 class App extends Component {
@@ -9,13 +9,36 @@ class App extends Component {
 		this.state = {
 			apiMessage: [],
 			userQuery: '',
-			searchEngine: ''
+			searchEngine: '',
+			searchStack: []
 		}
 
 		this.handleSubmit = this.handleSubmit.bind(this);
 		this.handleEngine = this.handleEngine.bind(this);
 		this.handleChange = this.handleChange.bind(this);
 	}
+
+	componentDidMount() {
+		this.timerID = setInterval(
+      () => this.searchStatus(),
+      60000
+    );
+	}
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  searchStatus() {
+    GET('/status')
+			.then((res) => {
+				if (!res.data.processing && res.data.stack.length !== 0) {
+					GET('/sec');
+				}
+				this.setState({ searchStack: res.data.stack });
+			})
+			.catch((err) => console.log('Error on /status', err))
+  }
 
 	handleSubmit(e) {
 		e.preventDefault();
@@ -49,6 +72,9 @@ class App extends Component {
 			<div className="App">
 				<h2>Add query for crawling</h2>
 				<form onSubmit={this.handleSubmit}>
+				  <input id="searchBox" type="text" name="userQuery" onChange={this.handleChange}></input>
+				  <br />
+				  <br />
 				  <label>
 				    Search Engine:
 				  </label>
@@ -58,11 +84,7 @@ class App extends Component {
 			    	<option>Bing</option>
 			    </select>
 			    <br />
-				  <label>
-				  Query:
-				  </label>
-				  <input type="text" name="userQuery" onChange={this.handleChange}></input>
-				  <br />
+			    <br />
 				  <input type="submit" value="Submit" />
 				</form>
 				<br />
@@ -77,7 +99,7 @@ class App extends Component {
 								</tr>
 							</thead>
 							<tbody>
-								<Message data={this.state.apiMessage} />
+								<Message data={this.state.searchStack} />
 							</tbody>
 						</table>
 				</div>
