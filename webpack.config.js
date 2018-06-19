@@ -8,7 +8,7 @@ module.exports = {
 		publicPath: '/'
 	},
 	resolve: {
-		extensions: ['.js', '.jsx', '.css', '.png', '.jpg', '.gif']
+		extensions: ['.js', '.jsx', '.css', '.png', '.jpg', '.gif', 'jpeg']
 	},
 	module: {
 		rules: [
@@ -19,6 +19,15 @@ module.exports = {
 					loader: 'babel-loader',
 					options: {
 						presets: ['react', 'env']
+					}
+				}
+			},
+			{
+				test: /\.(png|jpg|jpeg|gif)$/,
+				use: {
+					loader: 'file-loader',
+					options: {
+						name: '[path][name].[ext]'
 					}
 				}
 			}
