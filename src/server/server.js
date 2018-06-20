@@ -36,6 +36,7 @@ function asyncHandler(p) {
 }
 
 const c = new Crawler({ rateLimit: 3000 });
+const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36';
 
 function crawlerPromise(options) {
   return new Promise((resolve, reject) => {
@@ -71,7 +72,10 @@ const searchEngineCrawl = async (nextCount, searchEngine) => {
   }
 
   console.log('Current bracket url:', searchQuery + segment);
-  let $ = await crawlerPromise({ uri: searchQuery + segment });
+  let $ = await crawlerPromise({ 
+    uri: searchQuery + segment,
+    userAgent: userAgent
+  });
 
   const $body = $('body');
   let gTemp = $body.find('div.g'); // 'div.g' => google specific query results
