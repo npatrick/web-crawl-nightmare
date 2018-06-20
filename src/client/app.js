@@ -42,9 +42,6 @@ class App extends Component {
   searchStatus() {
     GET('/status')
 			.then((res) => {
-				if (!res.data.processing && res.data.stack.length !== 0) {
-					GET('/sec');
-				}
 				this.setState({ searchStack: res.data.stack });
 			})
 			.catch((err) => console.log('Error on /status', err))

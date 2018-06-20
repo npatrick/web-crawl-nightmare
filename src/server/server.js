@@ -71,23 +71,23 @@ const searchEngineCrawl = async (nextCount, searchEngine) => {
   }
 
   console.log('Current bracket url:', searchQuery + segment);
-  let $searchRes = await crawlerPromise({ uri: searchQuery + segment });
+  let $ = await crawlerPromise({ uri: searchQuery + segment });
 
-  const $body = $searchRes('body');
-  let gTemp = $body.find('div.g');
-  let bTemp = $body.find('.b_algo');
+  const $body = $('body');
+  let gTemp = $body.find('div.g'); // 'div.g' => google specific query results
+  let bTemp = $body.find('.b_algo'); // '.b_algo' => bing query results
   let resultList; 
-  if ($searchRes(gTemp[0]).html()) {
-    // 'div.g' => google specific query results
+  if (gTemp.length !== 0) {
     resultList = gTemp;
-  } else if ($searchRes(bTemp[0]).html()){
-    // '.b_algo' => bing query results
+  } else if (bTemp.length !== 0) {
     resultList = bTemp;
   } else {
     console.log('No more results...');
+    console.log('google div.g length?', gTemp.length);
+    console.log('what is bTemp length?', bTemp.length);
     return;
-    
   }
+
   let dbUserCheck = []; // used for bulk checking on mongo by $in utilization
   let tempInsta = [];
 
@@ -99,7 +99,7 @@ const searchEngineCrawl = async (nextCount, searchEngine) => {
     resultList.each((index, item) => {
       // need to check from cheerio markup results because we dont exactly
       // get what we see on browser
-      let hrefStr = $searchRes(item).find('.r > a').attr('href') || $searchRes(item).find('.b_attribution').text();
+      let hrefStr = $(item).find('.r > a').attr('href') || $(item).find('.b_attribution').text();
       let indexOfHttp = hrefStr.indexOf('http');
       let indexOfCom = hrefStr.indexOf('.com/');
       // g vs b => bing returns exact insta href, google doesn't...
@@ -187,7 +187,7 @@ app.get(
         processing = false;
       } else {
         console.log('Next Q to crawl');
-        return await axios.get('http://localhost:3000/sec')
+        await axios.get('http://localhost:3000/sec')
           .catch(err => {
             console.log('oops Axios:', err);
           })
@@ -200,7 +200,7 @@ app.get('/status', (req ,res) => {
   res.status(200).send({'processing': processing, 'stack': searchStack});
 });
 
-app.post('/add-query', (req, res) => {
+app.post('/add-query', async (req, res) => {
   let { searchEngine, userQuery } = req.body;
   if (searchEngine === 'Use all') {
     let firstEngine = {
@@ -214,14 +214,14 @@ app.post('/add-query', (req, res) => {
     searchStack.push(firstEngine, secEngine);
     if (!processing && searchStack.length !== 0) {
       console.log('Will now start processing');
-      axios.get('http://localhost:3000/sec');
+      await axios.get('http://localhost:3000/sec');
     }
     return res.send(searchStack);
   }
   searchStack.push(req.body);
   if (!processing && searchStack.length !== 0) {
     console.log('Will now start processing');
-    axios.get('http://localhost:3000/sec');
+    await axios.get('http://localhost:3000/sec');
   }
   res.send(searchStack);
 });
