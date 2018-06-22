@@ -19,13 +19,16 @@ class App extends Component {
 			apiMessage: [],
 			userQuery: '',
 			searchEngine: '',
+			crawlerMessage: '',
 			searchStack: [],
-			submitted: false
+			submitted: false,
+			crawlerSubmitted: false
 		}
 
 		this.handleSubmit = this.handleSubmit.bind(this);
 		this.handleEngine = this.handleEngine.bind(this);
 		this.handleChange = this.handleChange.bind(this);
+		this.runSearchEngineCrawler = this.runSearchEngineCrawler.bind(this);
 	}
 
 	componentDidMount() {
@@ -74,6 +77,18 @@ class App extends Component {
 		this.setState({ userQuery: e.target.value, submitted: false });
 	}
 
+	runSearchEngineCrawler(e) {
+		e.preventDefault();
+		const that = this;
+		GET('/sec')
+			.then(res => {
+				console.log('what data sec?', res.data);
+				this.setState({ crawlerMessage: res.data, crawlerSubmitted: true });
+				setTimeout(that.setState({ crawlerSubmitted: false }), 5000);
+			})
+			.catch(err => console.log('error in /sec', err));
+	}
+
 	render() {
 		return (
 			<Outer>
@@ -91,8 +106,13 @@ class App extends Component {
 			    </select>
 			    <br />
 			    <br />
-				  <Button primary type="submit">Submit</Button>
+				  <Button primary float="left" type="submit">Submit</Button>
 				  <CustomCheckCircle size='26px' submitted={this.state.submitted} />
+				  <Button 
+				  	float="right"
+				  	right="70px" 
+				  	onClick={this.runSearchEngineCrawler}
+				  >Run Crawler</Button>
 				</form>
 				<br />
 				<br />
