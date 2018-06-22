@@ -139,7 +139,7 @@ const searchEngineCrawl = async (nextCount, searchEngine) => {
   resultObj.tempInsta = tempInsta; // array of insta urls
   await instaScraper(resultObj);
   count++;
-  return await searchEngineCrawl(count, searchQuery);
+  await searchEngineCrawl(count, searchQuery);
 };
 
 db.on('open', () => {
@@ -191,7 +191,7 @@ app.get(
         processing = false;
       } else {
         console.log('Next Q to crawl');
-        await axios.get('http://localhost:3000/sec')
+        await axios.get(`http://${process.env.HOST}:${process.env.PORT}/sec`)
           .catch(err => {
             console.log('oops Axios:', err);
           })
@@ -216,17 +216,9 @@ app.post('/add-query', async (req, res) => {
       userQuery: userQuery
     }
     searchStack.push(firstEngine, secEngine);
-    if (!processing && searchStack.length !== 0) {
-      console.log('Will now start processing');
-      await axios.get('http://localhost:3000/sec');
-    }
     return res.send(searchStack);
   }
   searchStack.push(req.body);
-  if (!processing && searchStack.length !== 0) {
-    console.log('Will now start processing');
-    await axios.get('http://localhost:3000/sec');
-  }
   res.send(searchStack);
 });
 
