@@ -14,7 +14,7 @@ const instaScraper = async function(resultObj) {
   await Promise.resolve(resultObj)
     .then((resultObj) => {
       // check if users already exists in db
-      console.log('Checking on resultObj:\n', resultObj);
+      // console.log('Checking on resultObj:\n', resultObj);
       if (resultObj === null) {
         return null;
       }

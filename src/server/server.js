@@ -35,7 +35,7 @@ function asyncHandler(p) {
   }
 }
 
-const c = new Crawler({ rateLimit: 3000 });
+const c = new Crawler({ rateLimit: 4000 });
 const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36';
 
 function crawlerPromise(options) {
@@ -86,9 +86,8 @@ const searchEngineCrawl = async (nextCount, searchEngine) => {
   } else if (bTemp.length !== 0) {
     resultList = bTemp;
   } else {
-    console.log('No more results...');
-    console.log('google div.g length?', gTemp.length);
-    console.log('what is bTemp length?', bTemp.length);
+    console.log('No more results... or being blocked');
+    console.log('cheerio content:', $body.html());
     return;
   }
 
