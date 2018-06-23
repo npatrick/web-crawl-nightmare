@@ -2,10 +2,12 @@ const mongoose = require('mongoose');
 
 let mongoUri;
 
+// testing uri => @ds014648.mlab.com:14648/email-list
+
 if (process.env.NODE_ENV !== 'production') {
 	mongoUri = `mongodb://localhost/web-crawl`;
 } else {
-	mongoUri = `mongodb://${process.env.dbUser}:${process.env.dbPass}@ds014648.mlab.com:14648/email-list`;
+	mongoUri = `mongodb://${process.env.dbUser}:${process.env.dbPass}@ds018318-a0.mlab.com:18318,ds018318-a1.mlab.com:18316/crawlingdb?replicaSet=rs-ds018318`;
 }
 
 const dbOptions = {
