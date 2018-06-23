@@ -6,7 +6,7 @@ const run = require('../helperFn/run');
 const objToArr = require('../helperFn/objToArr');
 const { keyword, topDomain } = require('../../misc/resource');
 const simpleRun = require('../helperFn/simpleRun');
-const youtubeVo = require('../helperFn/youtubeVo');
+const youtubeVo = require('../helperFn/youtubeVO');
 
 let lastId;
 let nextRound;
