@@ -1,14 +1,14 @@
-const User = require('../../db/userSchema');
 const InstaUser = require('../../db/instaUserSchema');
+const InstaUserTemp = require('../../db/userSchemaTemp');
 
 
-let toDo = User
+let toDo = InstaUser
 	.find({})
 	.exec();
 
 	toDo
 	.then((docs) => {
-		InstaUser.insertMany(docs, (err, docs) => {
+		InstaUserTemp.insertMany(docs, (err, docs) => {
 			if (err) {
 				console.log('Error in inserting many...\n', err);
 			}
