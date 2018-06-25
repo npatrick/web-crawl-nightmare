@@ -226,9 +226,9 @@ app.get('/user-scraper',
   asyncHandler(async (req, res) => {
     if (!processing) {
       processing = true;
+      res.status(202).send('User website visiting has started!');
       await userSiteScraper();
       processing = false;
-      res.send('Finished visiting user urls!');
     } else {
       res.send('Currently in process of another task');
     }

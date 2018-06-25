@@ -1,4 +1,5 @@
 const beginNightmare = require('./beginNightmare');
+const nodeCrawler = require('./nodeCrawler');
 /**
  * Run
  * Iterate the insta urls and sequentialy visit each
@@ -27,11 +28,33 @@ const run = function * (destination, qSelect, isUserWeb, useProxy) {
 
   for (let i = 0; i < normalizeParam.length; i++ ) {
     let $cheerioObj;
+    let tempUrl;
+    let protocolUrl;
     if (normalizeParam[i] !== null && typeof normalizeParam[i] === 'object') {
-      $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect, isUserWeb, useProxy);
+      if (isUserWeb) {
+        tempUrl = normalizeParam[i].website;
+        if (!tempUrl.includes('://')) {
+          protocolUrl = `http://${tempUrl}`;
+        } else {
+          protocolUrl = tempUrl;
+        }
+        $cheerioObj = yield nodeCrawler(protocolUrl);
+      } else {
+        $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect, isUserWeb, useProxy);
+      }
       cheerioArr.push({ username: normalizeParam[i].username, cheerioObj: $cheerioObj });
     } else {
-      $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect, isUserWeb, useProxy);
+      if (isUserWeb) {
+        tempUrl = normalizeParam[i];
+        if (!tempUrl.includes('://')) {
+          protocolUrl = `http://${tempUrl}`;
+        } else {
+          protocolUrl = tempUrl;
+        }
+        $cheerioObj = yield nodeCrawler(protocolUrl);
+      } else {
+        $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect, isUserWeb, useProxy);
+      }
       cheerioArr.push($cheerioObj);
     }
   } // end of for loop
