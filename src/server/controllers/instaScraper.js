@@ -94,7 +94,7 @@ const instaScraper = async function(resultObj) {
             // bio = $insta('._tb97a > span').text();
             // website = $insta('._tb97a > a').text();
             if (typeof $insta !== 'function') {
-              console.log('$insta param not a function');
+              console.log('$insta param not a function', $insta);
               return;
             }
             let imageProf = $insta('._6q-tv').attr('src');

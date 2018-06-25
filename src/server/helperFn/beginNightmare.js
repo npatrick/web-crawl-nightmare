@@ -2,7 +2,7 @@ const Nightmare = require('nightmare');
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const { blackList } = require('../../misc/resource');
-const PendingInsta = require('../../db/pendingInstaSchema');
+const PendingInsta = require('../../db/pendingInstaSchema')
 
 Nightmare.action('proxy',
   function(name, options, parent, win, renderer, done) {
@@ -76,9 +76,14 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
     		normalizeDomain = domain;
     	}
       let domainPartsArr = normalizeDomain.split('/');
-      if (domainPartsArr[3].length < 1) {
-        console.log('wrong insta user path');
-        return nightmare;
+      console.log('Check on nightmare:', domainPartsArr);
+      // only run line below when we need proxy to
+      // check for /username existence on popular social media
+      if (useProxy) {
+        if (domainPartsArr[3].length < 1) {
+          console.log('wrong insta user path');
+          return nightmare;
+        }   
       }
 
       if (useProxy !== false) {
@@ -123,7 +128,7 @@ const beginNightmare = async (domain, selectorStr, isUserWeb, useProxy) => {
                 }
                 if (error.details == 'Navigation timed out after 10000 ms') {
                   console.log('I got error details, seeeeee =>', error.details);
-                  return undefined;
+                  nightmare.refresh();
                 }
                 if (error.details == 'ERR_NAME_NOT_RESOLVED') {
                   console.log('Probably did not get the html at all');
