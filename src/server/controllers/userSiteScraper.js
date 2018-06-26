@@ -151,7 +151,8 @@ const userSiteScraper = async function(idToStart) { // integrate accepting an ar
 	            				currentElem.includes('facebook.com/') && 
 	            				!currentElem.includes('/dialog/feed?') && 
 	            				!currentElem.includes('/sharer.php') &&
-	            				!currentElem.includes('/login.php')
+	            				!currentElem.includes('/login.php') && 
+	            				!currentElem.includes('app.facebook.com')
 	            			)
 	            		}
 	            	}).attr('href');
