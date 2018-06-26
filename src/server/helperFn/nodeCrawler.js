@@ -1,9 +1,12 @@
 const Crawler = require('crawler');
 const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36';
 
-const c = new Crawler({ 'retries': 1 });
 
-const nodeCrawler = (url) => {
+const nodeCrawler = (url, rateLimit) => {
+	const c = new Crawler({ 
+		'retries': 1,
+		rateLimit: rateLimit || 0
+	});
 
 	function crawlerProm(options) {
 		return new Promise((resolve, reject) => {

@@ -79,7 +79,7 @@ const twitterScraper = async function (idToStart) {
 				return
 			}
 			console.log('Visiting twitter urls...');
-			return vo(run(twitList, '.ProfileHeaderCard-bio', false))
+			return vo(run(twitList, '.ProfileHeaderCard-bio', false, false))
 				.then((cheerioArr) => {
 					if (cheerioArr === undefined || cheerioArr === null) {
 						return;
@@ -103,6 +103,7 @@ const twitterScraper = async function (idToStart) {
 					if (resultSoFarArr.length !== 0) {
 						let bulkUpdate = resultSoFarArr.reduce((acc, obj) => {
 							if (obj.data.email) {
+								console.log('email for:', obj.username, 'w/ data.email:', obj.data.email);
 								acc.push({
 									updateOne: {
 										filter: { username: obj.username },

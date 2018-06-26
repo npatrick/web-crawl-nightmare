@@ -40,7 +40,17 @@ const run = function * (destination, qSelect, isUserWeb, useProxy) {
         }
         $cheerioObj = yield nodeCrawler(protocolUrl);
       } else {
-        $cheerioObj = yield beginNightmare(normalizeParam[i].website, qSelect, isUserWeb, useProxy);
+        tempUrl = normalizeParam[i].website;
+        if (tempUrl.includes('twitter.com')) {
+          if (!tempUrl.includes('://')) {
+            protocolUrl = `http://${tempUrl}`;
+          } else {
+            protocolUrl = tempUrl;
+          }
+          $cheerioObj = yield nodeCrawler(protocolUrl, 1);
+        } else {
+          $cheerioObj = yield beginNightmare(tempUrl, qSelect, isUserWeb, useProxy);
+        }
       }
       cheerioArr.push({ username: normalizeParam[i].username, cheerioObj: $cheerioObj });
     } else {
@@ -53,7 +63,17 @@ const run = function * (destination, qSelect, isUserWeb, useProxy) {
         }
         $cheerioObj = yield nodeCrawler(protocolUrl);
       } else {
-        $cheerioObj = yield beginNightmare(normalizeParam[i], qSelect, isUserWeb, useProxy);
+        tempUrl = normalizeParam[i];
+        if (tempUrl.includes('twitter.com')) {
+          if (!tempUrl.includes('://')) {
+            protocolUrl = `http://${tempUrl}`;
+          } else {
+            protocolUrl = tempUrl;
+          }
+          $cheerioObj = yield nodeCrawler(protocolUrl, 1);
+        } else {
+          $cheerioObj = yield beginNightmare(tempUrl, qSelect, isUserWeb, useProxy);
+        }
       }
       cheerioArr.push($cheerioObj);
     }

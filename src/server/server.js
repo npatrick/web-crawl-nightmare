@@ -239,9 +239,9 @@ app.get('/twitter-scraper',
   asyncHandler(async (req, res) => {
     if (!processing) {
       processing = true;
+      res.status(202).send('Started visiting twitter urls!');
       await twitterScraper();
       processing = false;
-      res.send('Finished visiting twitter urls!');
     } else {
       res.send('Currently in process of another task');
     }
