@@ -10,18 +10,35 @@ const userSchema = Schema({
 		type: String,
 		unique: true
 	},
-	data: {
+	instagramLink: String,
+	youtubeLink: {
 		type: {
-			instagramLink: String,
-			fullName: String,
-			imageProf: String,
-			followers: Number,
-			website: String,
-			bio: String,
-			category: Array,
-			email: String
+			url: String,
+			successVisit: Boolean
 		}
-	}
+	},
+	fullName: String,
+	imageProf: String,
+	followers: Number,
+	website: String,
+	location: String,
+	bio: String,
+	category: Array,
+	email: Array,
+	twitterLink: {
+		type: {
+			url: String,
+			successVisit: Boolean
+		}
+	},
+	facebookLink: {
+		type: {
+			url: String,
+			successVisit: Boolean
+		}
+	},
+	likeItToKnowIt: String,
+	rate: Number
 });
 
 const User = mongoose.model('User', userSchema);
