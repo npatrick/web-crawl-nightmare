@@ -10,7 +10,12 @@ const userSchema = Schema({
 		type: String,
 		unique: true
 	},
-	instagramLink: String,
+	instagramLink: {
+		type: {
+			url: String,
+			successVisit: Boolean
+		}
+	},
 	youtubeLink: {
 		type: {
 			url: String,
