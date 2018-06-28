@@ -252,9 +252,9 @@ app.get('/facebook-scraper',
   asyncHandler(async (req, res) => {
     if (!processing) {
       processing = true;
+      res.status(202).send('Now visiting facebook urls!');
       await facebookScraper();
       processing = false;
-      res.send('Finished visiting facebook urls!');
     } else {
       res.send('Currently in process of another task');
     }

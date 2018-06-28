@@ -1,5 +1,5 @@
 const cheerio = require('cheerio');
-const InstaUser = require('../../db/instaUserSchema');
+const InstaUserTemp = require('../../db/userSchemaTemp');
 const vo = require('vo');
 const run = require('../helperFn/run');
 const objToArr = require('../helperFn/objToArr');
@@ -15,7 +15,7 @@ const facebookScraper = async function(idToStart) {
 
 	async function grabFbUrl(lastId) {
 		if (lastId) {
-			return await InstaUser
+			return await InstaUserTemp
 				.find({
 		  		// null is better than using {$exists: false}
 		  		// null will return docs w/ null values and non-existent field
@@ -30,7 +30,7 @@ const facebookScraper = async function(idToStart) {
 		  	.select('username data.facebook')
 		  	.exec()
 		}
-		return await InstaUser
+		return await InstaUserTemp
 			.find({
 				$and: [
 					{ 'data.email': null },
@@ -72,7 +72,13 @@ const facebookScraper = async function(idToStart) {
 					fbUrl = rawFbUrl.split(' ').join('');
 
 					// avoid /sharer /groups 
-					if (fbUrl.includes('facebook.com') && !fbUrl.includes('/sharer') && !fbUrl.includes('/groups')) {
+					if (
+						fbUrl.includes('facebook.com') && 
+						!fbUrl.includes('/sharer') && 
+						!fbUrl.includes('/groups') &&
+						!fbUrl.includes('/dialog/feed?') && 
+						!fbUrl.includes('app.facebook.com')
+					) {
 						// use about section of fb
 						let aboutSection;
 						let urlArr;
@@ -97,7 +103,7 @@ const facebookScraper = async function(idToStart) {
 				return;
 			}
 			console.log('Visiting facebook urls...');
-			return vo(run(fbList, '#content_container', false))
+			return vo(run(fbList, '#content_container', false, true))
 				.then((cheerioArr) => {
 					if (cheerioArr === undefined || cheerioArr === null) {
 						return;
@@ -114,9 +120,9 @@ const facebookScraper = async function(idToStart) {
 									return $parent.includes('mailto');
 								}
 							}).parent().attr('href');
-							console.log('did i get the email? ==>', tempEmail);
 							if (tempEmail) {
 								let hyperlink = tempEmail.slice(tempEmail.indexOf(':') + 1, tempEmail.indexOf('?'));
+								console.log(`email to be saved for ${userObj.username}:`, hyperlink);
 								resultSoFar[userObj.username].email = hyperlink;
 							}
 						}
@@ -138,7 +144,7 @@ const facebookScraper = async function(idToStart) {
 						}, []);
 						resultSoFar = {};
 						console.log('Bulk updating to be done ==>\n', bulkUpdate);
-						return (bulkUpdate.length !== 0) ? InstaUser.bulkWrite(bulkUpdate) : 'Nothing to update';
+						return (bulkUpdate.length !== 0) ? InstaUserTemp.bulkWrite(bulkUpdate) : 'Nothing to update';
 					}
 				})
 				.then((response) => {

@@ -41,13 +41,13 @@ const run = function * (destination, qSelect, isUserWeb, useProxy) {
         $cheerioObj = yield nodeCrawler(protocolUrl);
       } else {
         tempUrl = normalizeParam[i].website;
-        if (tempUrl.includes('twitter.com')) {
+        if (tempUrl.includes('twitter.com') || tempUrl.includes('facebook.com')) {
           if (!tempUrl.includes('://')) {
             protocolUrl = `http://${tempUrl}`;
           } else {
             protocolUrl = tempUrl;
           }
-          $cheerioObj = yield nodeCrawler(protocolUrl, 1);
+          $cheerioObj = tempUrl.includes('twitter.com') ? yield nodeCrawler(protocolUrl, 1) : yield nodeCrawler(protocolUrl, 0, true);
         } else {
           $cheerioObj = yield beginNightmare(tempUrl, qSelect, isUserWeb, useProxy);
         }
@@ -64,13 +64,13 @@ const run = function * (destination, qSelect, isUserWeb, useProxy) {
         $cheerioObj = yield nodeCrawler(protocolUrl);
       } else {
         tempUrl = normalizeParam[i];
-        if (tempUrl.includes('twitter.com')) {
+        if (tempUrl.includes('twitter.com') || tempUrl.includes('facebook.com')) {
           if (!tempUrl.includes('://')) {
             protocolUrl = `http://${tempUrl}`;
           } else {
             protocolUrl = tempUrl;
           }
-          $cheerioObj = yield nodeCrawler(protocolUrl, 1);
+          $cheerioObj = tempUrl.includes('twitter.com') ? yield nodeCrawler(protocolUrl, 1) : yield nodeCrawler(protocolUrl, 0, true);
         } else {
           $cheerioObj = yield beginNightmare(tempUrl, qSelect, isUserWeb, useProxy);
         }
