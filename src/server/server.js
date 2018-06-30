@@ -14,6 +14,8 @@ const twitterScraper = require('./controllers/twitterScraper');
 const facebookScraper = require('./controllers/facebookScraper');
 const youtubeScraper = require('./controllers/youtubeScraper');
 const InstaUser = require('../db/instaUserSchema');
+const User = require('../db/userSchema');
+
 const app = express();
 
 app.use(logger('dev'));
@@ -182,7 +184,10 @@ app.get(
 
       await searchEngineCrawl(null, `${baseQ}+${normQ}`);
 
-      const result = await InstaUser.find({}).count();
+      const result = await User.find({}).count();
+      
+      // TODO: need to adjust the key for proper reference
+      // to the user schema
       console.log('Whats result?', result);
 
       if (typeof searchStack[0] !== 'object') {
